@@ -215,6 +215,23 @@ async function start() {
   }
   phaseZeigen();
   if (ENDLOS) toast(`♾️ Endlos-Modus: eigener Spielstand, kein Programmieren. Nacht ${P.nacht} · Rekord ${P.rekord || '–'}`, 4500);
+  // 🏰 Startbildschirm (start.js) offen: die Startkarten kommen erst, wenn man ihn verlässt – Python lädt schon im Hintergrund
+  if (typeof startOffen === 'function' && startOffen()) startDanach(startKarten); else startKarten();
+  await initPython(BRUECKE);
+  if (!PY.bereit) {
+    karte(`<h2>Python lädt nicht</h2><p>${esc(PY.fehler || '')}</p>`, [{ label: 'Neu laden', fn: () => location.reload() }]);
+    return;
+  }
+  autoZiele();
+  if (P.phase === 'tag' && H?.art === 'sort' && !KO) kornStart();   // 🌾 Kornspeicher braucht Python schon zum Aufbauen
+  // Knöpfe, die auf Python gewartet haben, freigeben
+  const b = $('#hauptBtn');
+  if (b.textContent === 'Los!' || b.textContent === '▶ Ausführen') b.disabled = false;
+  else if (b.disabled && b.textContent === 'Python lädt …') phaseZeigen();
+}
+
+// Karten beim Start: Burgwahl, Erbe, Beute, Geschichte/Figur
+function startKarten() {
   // Erster Tag in einer weiteren Burg: Erbe wählen. Beim allerersten Start überhaupt: Begrüßung mit dem Ablauf des Spiels
   // 🔒 Gewünschte Burg (z. B. ?klasse=8) ist noch nicht freigeschaltet: Burgwahl mit Code-Feld zuerst
   if (!ENDLOS && PROFIL.burg !== BURGNR) { const w = PROFIL.burg; PROFIL.burg = BURGNR; profilSpeichern(); BURG_SEL = BURGEN[w] ? w : null; burgWahl(); }
@@ -228,17 +245,6 @@ async function start() {
     if (PROFIL.storyGesehen) weiter(); else { PROFIL.storyGesehen = true; profilSpeichern(); storyKarte(weiter); }
   }
   else if (!PROFIL.figur) figurWahl(() => { if (P.phase === 'tag' && H && !H.art) zeigeLage(H.start); });
-  await initPython(BRUECKE);
-  if (!PY.bereit) {
-    karte(`<h2>Python lädt nicht</h2><p>${esc(PY.fehler || '')}</p>`, [{ label: 'Neu laden', fn: () => location.reload() }]);
-    return;
-  }
-  autoZiele();
-  if (P.phase === 'tag' && H?.art === 'sort' && !KO) kornStart();   // 🌾 Kornspeicher braucht Python schon zum Aufbauen
-  // Knöpfe, die auf Python gewartet haben, freigeben
-  const b = $('#hauptBtn');
-  if (b.textContent === 'Los!' || b.textContent === '▶ Ausführen') b.disabled = false;
-  else if (b.disabled && b.textContent === 'Python lädt …') phaseZeigen();
 }
 
 window.addEventListener('resize', () => {

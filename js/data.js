@@ -581,5 +581,6 @@ function laden() {
   profilSpeichern();
 }
 function speichern() {
+  P.zuletzt = Date.now();   // 🏰 Startbildschirm: „zuletzt gespielt …“ (geteilte Schulrechner)
   try { localStorage.setItem(spielSchluessel(), JSON.stringify(P)); } catch { /* privat */ }
 }
