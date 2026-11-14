@@ -779,8 +779,11 @@ function zeichneEffekt(g, k0, f, px, jetzt, W, H, N) {
 }
 
 // --- Anzeige im Spielfeld: Mauerleben, Nacht, Gegner übrig, Abklingzeiten ---
-function zeichneAnzeige(g, k, W, N) {
-  const r = Math.max(0, N.hp / N.max), bw = Math.min(220, W * 0.32);
+// kompakt = eigene Leiste über dem Feld (#nachtLeiste, schmale Bildschirme): Mauer/XP links, Welle rechts daneben,
+// keine Zauber-Uhren (die zeigt die Zauberleiste unter dem Feld)
+const NACHT_KOMPAKT = 560;
+function zeichneAnzeige(g, k, W, N, kompakt = false) {
+  const r = Math.max(0, N.hp / N.max), bw = kompakt ? Math.max(80, W * 0.44 - 44) : Math.min(220, W * 0.32);
   g.fillStyle = 'rgba(8,16,40,.82)'; g.beginPath(); g.roundRect(8, 8, bw + 44, 28, 14); g.fill();
   g.fillStyle = '#3a0d12'; g.beginPath(); g.roundRect(38, 15, bw, 14, 7); g.fill();
   g.fillStyle = farbe(r > 0.5 ? 'gut' : r > 0.25 ? 'mittel' : 'schlecht'); g.beginPath(); g.roundRect(38, 15, Math.max(0, bw * r), 14, 7); g.fill();
@@ -826,8 +829,9 @@ function zeichneAnzeige(g, k, W, N) {
   let txt = `${vor}🌙 Nacht ${N.n}  ·  Welle ${N.welle + 1}/${N.wellen.length}  ·  👾 ${rest}`, tw = g.measureText(txt).width + 24;
   // Schmaler Bildschirm: kürzer schreiben; passt es neben Mauer- und XP-Leiste immer noch nicht, rutscht alles darunter
   const links = bw + 60;
-  if (W - tw - 8 < links) { txt = `${vor}🌙 ${N.n} · ${N.welle + 1}/${N.wellen.length} · 👾 ${rest}`; tw = g.measureText(txt).width + 24; }
-  const y0 = W - tw - 8 < links ? 66 : 8;
+  if (kompakt || W - tw - 8 < links) { txt = `${vor}🌙 ${N.n} · ${N.welle + 1}/${N.wellen.length} · 👾 ${rest}`; tw = g.measureText(txt).width + 24; }
+  if (kompakt && W - tw - 8 < links) { g.font = `13px "Lilita One", ${EMOJI_FONT}`; tw = g.measureText(txt).width + 18; }
+  const y0 = !kompakt && W - tw - 8 < links ? 66 : 8;
   g.fillStyle = 'rgba(8,16,40,.82)'; g.beginPath(); g.roundRect(W - tw - 8, y0, tw, 28, 14); g.fill();
   g.fillStyle = '#fff'; g.fillText(txt, W - tw / 2 - 8, y0 + 15);
   // 🎌 Wellenleiste: wie viel von dieser Welle schon aus dem Portal kam; am Ende der letzten Welle wartet der Anführer
@@ -837,7 +841,7 @@ function zeichneAnzeige(g, k, W, N) {
   g.fillStyle = '#c9a0ff'; g.beginPath(); g.roundRect(lx, y0 + 33, Math.max(0, lb * anteil), 6, 3); g.fill();
   if (N.welle === N.wellen.length - 1) malSprite(g, '👑', lx + lb + 9, y0 + 36, 12);
   // Abklingzeiten: Kreise mit Uhr-Füllung, bereit = leuchtet gold
-  N.zauber.forEach((z, i) => {
+  if (!kompakt) N.zauber.forEach((z, i) => {
     const x = W - 26 - (N.zauber.length - 1 - i) * 38, y = y0 + 64, R = 15, cd = zauberCd(N.T, z.name), rest = Math.max(0, z.t);
     g.fillStyle = 'rgba(8,16,40,.85)'; g.beginPath(); g.arc(x, y, R + 2, 0, Math.PI * 2); g.fill();
     g.globalAlpha = rest > 0 ? 0.45 : 1; malSprite(g, ZAUBER[z.name].ico, x, y, 17); g.globalAlpha = 1;
@@ -1166,5 +1170,19 @@ function zeichneNacht(cv, N, opt = {}) {
   }
   zeichneMomente(g, k, px, W, H, dt, N);
   g.restore();
-  zeichneAnzeige(g, k, W, N);
+  // 📱 Schmaler Bildschirm (Nutzerwunsch 2026-11-14): Mauer-, XP- und Wellenbalken in eine eigene Leiste über dem Feld,
+  // damit sie das kleine Spielfeld nicht verdecken
+  const leiste = !opt.mini && cv.id === 'nachtCanvas' ? document.getElementById('nachtLeiste') : null;
+  const kompakt = !!leiste && W < NACHT_KOMPAKT;
+  if (leiste) leiste.classList.toggle('hidden', !kompakt);
+  if (kompakt) {
+    const lh = N.kombosAn?.size || N.komboLadung || N.ausbruch ? 90 : 68, dpr = window.devicePixelRatio || 1;
+    if (leiste.width !== Math.round(W * dpr) || leiste.height !== Math.round(lh * dpr)) {
+      leiste.width = Math.round(W * dpr); leiste.height = Math.round(lh * dpr); leiste.style.height = lh + 'px'; leiste.style.width = W + 'px';
+    }
+    const lg = leiste.getContext('2d');
+    lg.setTransform(dpr, 0, 0, dpr, 0, 0);
+    lg.clearRect(0, 0, W, lh);
+    zeichneAnzeige(lg, k, W, N, true);
+  } else zeichneAnzeige(g, k, W, N);
 }

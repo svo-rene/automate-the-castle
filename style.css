@@ -1047,3 +1047,11 @@ body.startoffen:not(.starteigen) #overlay { z-index: 30; }
   .startpanel > .btn.big { font-size: 23px; padding: 16px 22px; }
   .startsub { font-size: 19px; }
 }
+/* 📱 Nacht am Handy (Nutzerwunsch 2026-11-14): Balken über dem Feld (#nachtLeiste), Bauleiste unter dem Feld – das Spielfeld bekommt die volle Breite */
+.nachtleiste { display: block; margin: 0 auto 4px; }
+@media (max-width: 600px) {
+  .feldreihe { flex-direction: column; align-items: stretch; gap: 6px; }
+  .feldreihe .bauleiste { flex-direction: row; flex-wrap: wrap; justify-content: center; align-items: center; width: auto; }
+  .feldreihe .bauleiste .bltitel { width: auto; }
+  .feldreihe .bauleiste button { width: 62px; }
+}

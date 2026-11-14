@@ -143,9 +143,7 @@ function beuteKarte(angebot, titel, text, weiter) {
 // Erster doppelter Zauber: erklären, was ein Verstärker-Platz bringt
 function stuetzErklaeren(t, weiter) {
   P.gesehen.stuetz = true;
-  karte(`<h2>➕ Ein Verstärker-Platz!</h2><p>Dein <b>${STEINE[t].ico} ${STEINE[t].name}</b> hat jetzt einen Platz für einen Verstärker.${(P.sockel || []).includes(t) ? '' : ' Er wirkt, sobald dieser Zauber in einem deiner Zauberplätze steckt (✨ Talente → 🪄 Zauber).'}</p>
-    <p>Ein <b>Verstärker</b> verändert, <i>wie</i> der Zauber wirkt – zum Beispiel ${STUETZEN.doppelt.ico} Doppelt: ${esc(STUETZEN.doppelt.was[t])}. Verstärker lassen die 👑 Anführer ab jetzt auch fallen.</p>
-    <p class="hinweis">Diesen Zauber findest du nicht noch einmal. Weitere Verstärker-Plätze kannst du kaufen (✨ Talente → 🪄 Zauber)${ENDLOS ? '' : ' – ab Nacht 11 oder wenn alle Aufgaben der Burg gelöst sind'}.</p>`,
+  karte(`<h2>➕ Ein Verstärker-Platz!</h2><p>Dein <b>${STEINE[t].ico} ${STEINE[t].name}</b> hat jetzt einen Platz für einen Verstärker. Ein Verstärker verändert, wie der Zauber wirkt – z. B. ${STUETZEN.doppelt.ico} Doppelt: ${esc(STUETZEN.doppelt.was[t])}.</p>`,
   [{ label: 'Verstanden', fn: weiter }]);
 }
 // Vor der allerersten Nacht: ersten Zauber wählen (alle sechs zur Auswahl)

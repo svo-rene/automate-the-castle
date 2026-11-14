@@ -114,7 +114,7 @@ function komboKarte(id, mehr = []) {   // mehr = weitere neue Kombos derselben P
   profilSpeichern();
   P.gesehen.kombo = true;   // steht danach im Heft unter „So funktioniert das Spiel“
   karte(`<h2>🔗 Neue Kombo entdeckt!</h2>
-    ${erste ? '<p>Eine <b>Kombo</b> entsteht von selbst, wenn Zauber zweier Richtungen zusammen eingesetzt sind – mit drei Zaubern gibt es Dreier-Kombos. Sie kostet nichts und wirkt in jeder Nacht.</p><p>Jedes Auslösen lädt die 🔗 <b>Kombo-Leiste</b> (links oben). Ist sie voll, bricht deine häufigste Kombo als großer <b>Kombo-Ausbruch</b> los – tippst du den ✨ Funken vorher an, wird er noch stärker.</p>' : ''}
+    ${erste ? '<p>Zwei Zauber verschiedener Richtungen wirken zusammen als <b>Kombo</b> – von selbst und kostenlos.</p>' : ''}
     <div class="kkarte da an"><div class="kpaar">${k.paar.map((t) => `${THEMEN[t].ico} ${THEMEN[t].name}`).join(' + ')}${dreier ? ' · Dreier-Kombo' : ''}</div>
       <div class="kname">${k.ico} ${esc(k.name)}</div><div class="ktext">${esc(k.text)}</div></div>
     ${mehr.length ? `<p><b>Außerdem neu:</b> ${mehr.map(komboById).filter(Boolean).map((m) => `${m.ico} ${esc(m.name)}`).join(', ')}</p>` : ''}

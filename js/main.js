@@ -85,15 +85,14 @@ function erbeKarte() {
 }
 
 // 📖 Einstiegsgeschichte: was Tag und Nacht miteinander zu tun haben, Aufgabe und Ziel
+// Nutzerwunsch 2026-11-14: keine Textwände beim Start – zwei Sätze, der Rest wird erklärt, wenn man ihn braucht
 const STORY = [
-  'Hinter dem Fluss liegt dichter Nebel. Jede Nacht öffnen sich darin Portale – und Monster ziehen zur Burg.',
-  'Die Burg braucht Türme, und Türme kosten Gold. Das Gold kommt von den Feldern. Doch arbeiten musst nicht du selbst: Du gibst deiner Hilfe auf dem Hof Befehle, die sie genau so ausführt – du programmierst.',
-  'Am Abend baust du mit dem Gold Türme. In der Nacht verteidigen sie die Burg, zusammen mit deiner Zauberkraft.',
-  'Dein Ziel: Lerne Tag für Tag besser programmieren, halte so viele Nächte wie möglich durch – und vertreibe den Nebel aus dem Land.',
+  'Jede Nacht kommen Monster aus dem Nebel und greifen deine Burg an.',
+  'Tagsüber programmierst du deine Hilfe auf dem Hof – das bringt Gold für Türme.',
 ];
 function storyKarte(weiter) {
   karte(`<h2>🏰 Die Burg im Nebel</h2>${STORY.map((s) => `<p>${s}</p>`).join('')}
-    <p class="hinweis">☀️ Tag = programmieren und Gold verdienen · 🌇 Abend = Türme bauen · 🌙 Nacht = die Burg verteidigen</p>`,
+    <p class="hinweis">☀️ programmieren · 🌇 Türme bauen · 🌙 verteidigen</p>`,
   [{ label: 'Weiter ▶', fn: weiter }]);
 }
 // 🧑‍🌾 Figur wählen: Bauer & Zauberer oder Bäuerin & Zauberin (PROFIL.figur, gilt für alle Burgen)
@@ -102,10 +101,10 @@ const figur = () => FIGUR[PROFIL.figur] || FIGUR.m;
 function figurWahl(weiter) {
   let sel = PROFIL.figur || null;
   const zeig = () => {
-    karte(`<h2>Wer bist du?</h2><p>Tagsüber arbeitet deine Figur auf dem Hof, nachts zaubert sie auf der Burgmauer. Wähle:</p>
+    karte(`<h2>Wer bist du?</h2>
       <div class="figurwahl">${['m', 'w'].map((f) => `<button data-figur="${f}" class="${sel === f ? 'sel' : ''}"><canvas width="230" height="130" data-vorschau="${f}"></canvas>
         <b>${FIGUR[f].bauer} & ${FIGUR[f].held}</b></button>`).join('')}</div>
-      <p class="hinweis">Du kannst das später jederzeit ändern (☰ → Figur wählen).</p>`,
+      <p class="hinweis">Später änderbar: ☰ → Figur wählen</p>`,
     [{ label: sel ? 'Los geht\'s!' : '👆 Erst antippen', offen: !sel, fn: () => { if (!sel) return; PROFIL.figur = sel; profilSpeichern(); weiter?.(); } }]);
     // Vorschau: dieselben Zeichnungen wie im Spiel
     const alt = PROFIL.figur;
@@ -241,7 +240,8 @@ function startKarten() {
   // Die Geschichte nur einmal je Profil (Spieltest: bei jeder neuen LK-Burg kam sie wieder), danach nur die Begrüßung dieser Burg
   else if (!P.gesehen.willkommen && P.tag === 1 && P.phase === 'morgen') {
     P.gesehen.willkommen = true; speichern();
-    const weiter = () => (PROFIL.figur ? hilfe(true) : figurWahl(() => hilfe(true)));
+    // danach keine Regel-Karte mehr (Nutzerwunsch: nur erklären, wenn man es braucht) – der 👆 Finger führt zum ersten Hof
+    const weiter = () => { if (!PROFIL.figur) figurWahl(); };
     if (PROFIL.storyGesehen) weiter(); else { PROFIL.storyGesehen = true; profilSpeichern(); storyKarte(weiter); }
   }
   else if (!PROFIL.figur) figurWahl(() => { if (P.phase === 'tag' && H && !H.art) zeigeLage(H.start); });

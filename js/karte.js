@@ -491,7 +491,7 @@ function abendStart() {
     const gp = guterPlatz('pfeil'), blatt = () => karteOffen() && !!$('#turmBlatt');   // ein geschlossenes Blatt bleibt versteckt im DOM
     const gebaut = () => Object.keys(P.tuerme).length > 0;
     anleitung('bauen', [
-      { ziel: () => $('#scr-karte .bauleiste [data-bau="pfeil"]'), text: 'Hier rechts wählst du einen Turm. Nimm den Pfeilturm!', fertig: () => !!BAUMODUS || gebaut() },
+      { ziel: () => $('#scr-karte .bauleiste [data-bau="pfeil"]'), text: 'Wähle hier den Pfeilturm!', fertig: () => !!BAUMODUS || gebaut() },
       { ziel: () => ({ el: $('#abendCanvas'), fx: (gp.x + 0.5) / NFELD.w, fy: (gp.y + 0.5) / NFELD.h }), text: 'Ein guter Platz! In der Kurve trifft dein Turm gleich mehrere Wegstücke. Tippe hier.', fertig: () => (BAU?.fest && !BAU.grund) || gebaut() },
       { ziel: () => $('#bauOk'), text: 'Der gelbe Kreis zeigt, wie weit er schießt. Bauen!', fertig: gebaut },
       { ziel: () => $('#hauptBtn'), text: 'Jetzt kommt die Nacht!', fertig: () => P.phase === 'nacht' },
@@ -526,7 +526,9 @@ function abendStart() {
     }
   }
   const billig = Math.min(...Object.values(TUERME).map((t) => t.preis));
-  if (erklaere('bauen', P.gold < billig ? ` Ein Turm kostet mindestens ${billig} 🪙 – heute reicht es noch nicht. Halte so lange durch, wie du kannst, und löse morgen einen Hof!` : '')) { /* Abend erklärt */ }
+  // Führt der 👆 Finger durchs erste Bauen, braucht es keine Karte davor (Nutzerwunsch: nur erklären, wenn man es braucht)
+  if (!P.gesehen.bauen && !Object.keys(P.tuerme).length && P.gold >= billig) { P.gesehen.bauen = true; }
+  else if (erklaere('bauen', P.gold < billig ? ` Ein Turm kostet ${billig} 🪙 – heute reicht es noch nicht.` : '')) { /* Abend erklärt */ }
   else if (frei > 0 && erklaere('talente', ' Dein Held 🧙 ist aufgestiegen – oben: ✨ Talente.')) { /* Netz erklärt */ }
   else erklaerungenPruefen();
   speichern();
@@ -681,7 +683,7 @@ function renderBau() {
         <p class="hinweis">Doch nicht bauen? Rechts auf <b>✖ Stopp</b>.</p>`;
       return;
     }
-    box.innerHTML = `<h3>🔨 Bauen</h3><p class="hinweis">Wähle rechts neben dem Spielfeld einen Turm und tippe dann eine freie Stelle an. Einen gebauten Turm antippen = ausbauen.</p>
+    box.innerHTML = `<h3>🔨 Bauen</h3><p class="hinweis">Turm wählen, dann neben den Weg tippen. Turm antippen = ausbauen.</p>
       <p class="hinweis">Türme: ${Object.keys(P.tuerme).length}</p>
       <div class="zeile"><span>🧱 Mauer ${pause ? `${Math.ceil(N.hp)}/${N.max}` : `${mauerMax()} Leben`} · 🛡️ Torwache: ${w.n} Soldaten</span>
         <button class="btn klein gruen" id="burgBtn">🛡️ Burg stärken</button></div>`;

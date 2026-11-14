@@ -127,7 +127,7 @@ const HOEFE = [
   // --- Kapitel 1: 🧩 Blöcke (antippen, nicht tippen) ---
   hof({ id: 'b1', kapitel: 1, bloecke: true, ico: '🥕', titel: 'Der erste Schritt', ziel: 'Ernte die Rübe.', lohn: 15,
     start: O(['.r']), befehle: SEQ, neu: SEQ,
-    merke: { titel: 'Dein Bauer', text: 'Der Bauer macht genau, was deine Blöcke sagen – von oben nach unten. ⬆️ forward() geht ein Feld weiter, 🥕 harvest() erntet. Tippe die Blöcke unten an.', code: 'forward()\nharvest()' },
+    merke: { titel: 'Dein Bauer', text: 'Der Bauer macht genau, was deine Blöcke sagen – von oben nach unten. Tippe die Blöcke unten an.', code: 'forward()\nharvest()' },
     tipps: ['Der Bauer steht neben der Rübe. Erst muss der Bauer hingehen.', 'Erst ein Schritt, dann ernten.', 'Tippe forward() an, dann harvest().'],
     loesung: 'forward()\nharvest()' }),
   hof({ id: 'b2', kapitel: 1, bloecke: true, ico: '🥕', titel: 'Drei in einer Reihe', ziel: 'Ernte alle 3 Rüben.', lohn: 15,
@@ -145,7 +145,7 @@ const HOEFE = [
     loesung: 'forward()\nharvest()\nturn_right()\nforward()\nharvest()' }),
   VORHER({ id: 'b4v', kapitel: 1, bloecke: true, ico: '🔮', titel: 'Lies den Plan', lohn: 20,
     start: O(['.rr', 'rrr']), befehle: DREH,
-    merke: { titel: '🔮 Code lesen', text: 'Hier ist der Code schon fertig – aber er läuft noch nicht. Lies ihn und sag voraus, was der Bauer tun wird: Tippe auf dem Acker die Felder an, nach denen gefragt wird, dann ✅ Prüfen. Stimmt alles, läuft der Code und du siehst, ob du recht hattest.' },
+    merke: { titel: '🔮 Code lesen', text: 'Der Code ist schon fertig. Sag voraus, was der Bauer tun wird: Tippe die passenden Felder an, dann ✅ Prüfen.' },
     tipps: ['Nach turn_right() schaut der Bauer nach unten.', 'Nur harvest() erntet. Läuft der Bauer über eine Rübe, bleibt sie stehen.'],
     code: 'forward()\nturn_right()\nforward()\nharvest()\nturn_left()\nforward()\nharvest()' }),
   hof({ id: 'b5', kapitel: 1, bloecke: true, ico: '↩️', titel: 'Links herum', ziel: 'Ernte alle 3 Rüben.', lohn: 20,
@@ -164,7 +164,7 @@ const HOEFE = [
   // --- Kapitel 2: ⌨️ Python tippen (in Burg 7 das letzte Kapitel – erst nach Blöcken, Schleifen und Variablen) ---
   hof({ id: 's1', kapitel: 2, ico: '⌨️', titel: 'Jetzt wird getippt', ziel: 'Ernte beide Rüben.', lohn: 45, sprache: S_7,
     start: O(['.rr']), befehle: SEQ,
-    merke: { titel: 'Python tippen', text: 'Zum Schluss schreibst du den Code selbst – genau wie unter deinen Blöcken: jede Zeile ein Befehl, mit runden Klammern am Ende. Was in eine Schleife gehört, rückst du ein (Tab-Taste = 4 Leerzeichen). Die Knöpfe unten helfen beim Tippen.', code: 'forward()\nharvest()' },
+    merke: { titel: 'Python tippen', text: 'Jetzt tippst du den Code selbst: jede Zeile ein Befehl, mit () am Ende. Was in eine Schleife gehört, rückst du ein (Tab-Taste).', code: 'forward()\nharvest()' },
     tipps: ['Schreib forward() in die erste Zeile.', 'Die Klammern () gehören immer dazu.', 'forward() harvest() forward() harvest() – jeweils in eine eigene Zeile.'],
     loesung: 'forward()\nharvest()\nforward()\nharvest()' }),
   hof({ id: 's2', kapitel: 2, ico: '🌱', titel: 'Die lange Reihe', ziel: 'Ernte alle 5 Rüben.', lohn: 45, sprache: S_7,
@@ -206,7 +206,7 @@ const HOEFE = [
   // --- Kapitel 3: 🔁 Die Zählschleife for ---
   hof({ id: 'f1', kapitel: 3, ico: '🌱', titel: 'Zehn am Stück', ziel: 'Ernte alle 10 Rüben.', lohn: 30,
     start: O(['.rrrrrrrrrr']), befehle: [...SEQ, 'for'], neu: ['for'], sprache: S_FOR,
-    merke: { titel: 'Die Zählschleife for', text: 'Mit 🔁 for wiederholst du Befehle. Alle Blöcke, die du danach antippst, landen in der Schleife – bis du „⬅ aus der Schleife“ tippst. Sie laufen so oft, wie die Zahl im Block sagt – tippe die Zahl an und ändere sie. Im Beispiel dreht sich der Bauer 4-mal nach rechts und schaut danach wieder wie am Anfang.', code: 'for i in range(4):\n    turn_right()' },
+    merke: { titel: 'Die Zählschleife for', text: 'Mit 🔁 for wiederholst du Befehle so oft, wie die Zahl sagt. Blöcke, die du danach antippst, landen in der Schleife – bis „⬅ aus der Schleife“.', code: 'for i in range(4):\n    turn_right()' },
     tipps: ['Zehnmal Schritt und Ernten – das wären 20 Blöcke! Mit einer Schleife sind es drei.', 'Erst for antippen, dann forward() und harvest() – sie landen in der Schleife.', 'Stell im for-Block die Zahl auf 10.'],
     loesung: 'for i in range(10):\n    forward()\n    harvest()' }),
   VORHER({ id: 'f1v', kapitel: 3, ico: '🔮', titel: 'Wie oft?', lohn: 30,
@@ -239,7 +239,7 @@ const HOEFE = [
     loesung: 'for i in range(5):\n    forward()\n    harvest()\nforward()\nfor i in range(5):\n    forward()\n    harvest()' }),
   hof({ id: 'f8', kapitel: 3, ico: '🔲', titel: 'Rund ums Beet', ziel: 'Ernte alle Rüben rund um das Beet.', lohn: 45,
     start: RAHMEN(6, 6), befehle: [...DREH, 'for'], sprache: S_FOR,
-    merke: { titel: 'Schleife in der Schleife', text: 'Eine Schleife darf in einer anderen stehen: Tippe for, während du schon in einer Schleife bist. Die innere läuft bei jeder Runde der äußeren komplett durch. Im Beispiel läuft turn_right() 2 · 3 = 6-mal, forward() nur 2-mal. Mit „⬅ aus der Schleife“ kommst du eine Ebene nach außen.', code: 'for i in range(2):\n    for j in range(3):\n        turn_right()\n    forward()' },
+    merke: { titel: 'Schleife in der Schleife', text: 'Eine Schleife darf in einer anderen stehen. Die innere läuft bei jeder Runde der äußeren ganz durch – hier turn_right() 2 · 3 = 6-mal.', code: 'for i in range(2):\n    for j in range(3):\n        turn_right()\n    forward()' },
     tipps: ['Jede Seite ist gleich: 5 Schritte mit Ernten, dann rechts drehen.', 'Eine Seite ist eine Schleife. Und die Seiten wiederholen sich viermal.', 'for (4) · darin for (5) mit forward(), harvest() · ⬅ einmal raus · turn_right()'],
     loesung: 'for i in range(4):\n    for j in range(5):\n        forward()\n        harvest()\n    turn_right()' }),
   VORHER({ id: 'f8v', kapitel: 3, ico: '🔮', titel: 'Schleife in der Schleife lesen', lohn: 45,
@@ -254,7 +254,7 @@ const HOEFE = [
   // --- Kapitel 22: 🧱 Ziegel und Löcher (wie Robot Karol: aufheben und legen, Burg 7 nach for) ---
   hof({ id: 'z1', kapitel: 22, ico: '🧱', titel: 'Der erste Ziegel', ziel: 'Heb den Ziegel auf und flick damit das Loch.', lohn: 35,
     start: O(['.zo']), befehle: KAROL, neu: ['pick_up', 'place'], sprache: S_FOR,
-    merke: { titel: 'Ziegel', text: 'Der Weg zur Burg hat Löcher. ✋ pick_up() hebt einen Ziegel auf und legt ihn in den Korb. 🧱 place() legt einen Ziegel aus dem Korb ins Loch, auf dem der Bauer steht. Unten links siehst du, wie viele Ziegel im Korb sind.', code: 'forward()\npick_up()\nforward()\nplace()' },
+    merke: { titel: 'Ziegel', text: 'Der Weg hat Löcher. ✋ pick_up() hebt einen Ziegel in den Korb, 🧱 place() legt ihn ins Loch unter dem Bauern.', code: 'forward()\npick_up()\nforward()\nplace()' },
     tipps: ['Erst zum Ziegel gehen.', 'Aufheben, dann weiter zum Loch.', 'forward, pick_up, forward, place'],
     loesung: 'forward()\npick_up()\nforward()\nplace()' }),
   hof({ id: 'z2', kapitel: 22, ico: '🕳️', titel: 'Löcher im Weg', ziel: 'Flick alle 9 Löcher. Im Korb sind genug Ziegel.', lohn: 35,
@@ -533,7 +533,7 @@ const HOEFE = [
   // --- Burg 8, Kapitel „Auffrischung“: das Wichtigste aus Klasse 7 (for, Variablen) in wenigen Höfen, getippt; dann kommt while ---
   VORHER({ id: 'a1', kapitel: 9, ico: '🔮', titel: 'Kennst du das noch?', lohn: 20,
     start: O(['.rrr', '..r.', '..rr', '..r.']), befehle: [...DREH, 'for'], sprache: S_7,
-    merke: { titel: '🏯 Willkommen in Burg 8!', text: 'Kurz erinnert: for wiederholt Befehle so oft, wie range(…) sagt. Was eingerückt darunter steht, gehört zur Schleife. In Burg 8 schreibst du Python selbst – die Knöpfe unten helfen beim Tippen. Neu kommen while und Verzweigungen.', code: 'for i in range(3):\n    forward()\n    harvest()' },
+    merke: { titel: '🏯 Willkommen in Burg 8!', text: 'Kurz erinnert: for wiederholt, was eingerückt darunter steht. In Burg 8 tippst du Python selbst.', code: 'for i in range(3):\n    forward()\n    harvest()' },
     tipps: ['Die erste Schleife läuft genau 2-mal.', 'Danach dreht er sich nach unten, und die zweite Schleife läuft auch 2-mal.'],
     code: 'for i in range(2):\n    forward()\n    harvest()\nturn_right()\nfor i in range(2):\n    forward()\n    harvest()' }),
   hof({ id: 'a2', kapitel: 9, ico: '📐', titel: 'Die Ecke', ziel: 'Ernte alle 6 Rüben.', lohn: 25,
