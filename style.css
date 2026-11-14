@@ -1055,3 +1055,8 @@ body.startoffen:not(.starteigen) #overlay { z-index: 30; }
   .feldreihe .bauleiste .bltitel { width: auto; }
   .feldreihe .bauleiste button { width: 62px; }
 }
+/* „Mehr“ auf Ergebniskarten (Nutzerwunsch 2026-11-14: nur das Wichtigste sichtbar, der Rest zum Aufklappen) */
+details.mehr { margin-top: 10px; border-top: 1px solid var(--rand); padding-top: 6px; }
+details.mehr > summary { cursor: pointer; color: var(--blau); font-size: 14px; padding: 4px 0; }
+details.mehr[open] > summary { margin-bottom: 4px; }
+details.mehr h4 { margin: 10px 0 4px; font: 15px 'Lilita One', sans-serif; font-weight: 400; }

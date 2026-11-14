@@ -870,14 +870,15 @@ function ergebnis(e) {
        <div class="zeile"><span>⭐ sparsam: ${e.zuege} Züge</span><span>${e.sparsam ? '✓' : `Ziel ≤ ${H.sparsam}`}</span></div>`
     : `<p>${e.runs.map((r, i) => `${e.runs.length > 1 ? `Hof ${LAGE_NAME[i]}: ` : ''}${r.ok ? '✓' : esc(r.err ? 'Fehler in Zeile ' + r.err[0] : r.msg)}`).join('<br>')}</p>${einrueckHinweis(e.runs)}`;
   const loesung = e.ok ? `<details><summary>Musterlösung ansehen</summary><pre class="mono">${esc(H.loesung)}</pre></details>` : '';
+  // Nutzerwunsch 2026-11-14: sichtbar nur Ergebnis, Sterne bzw. Fehler und Lohn – Erklärungen unter „Mehr“
+  const mehrText = e.ok
+    ? `${why}${e.warFertig ? '<p class="hinweis">Schon gelöster Hof: weniger Lohn, neue Sterne zählen voll.</p>' : ''}${loesung}`
+    : `<p class="hinweis">${e.warFertig ? 'Diesen Hof hast du schon gelöst – Teillohn gibt es nur beim ersten Mal.' : `Für die ganze Aufgabe gibt es ${H.lohn} 🪙, mit ⭐⭐ noch mehr.`} Morgen kannst du es noch einmal versuchen. ${puzzleMoeglich(H) ? 'Wenn es wieder hakt, hilft dir die 🧩 Puzzle-Hilfe.' : 'Wenn du willst, nimm einen 💡 Tipp.'}</p>`;
   karte(`<h2>${e.ok ? 'Geschafft! 🎉' : 'Noch nicht ganz'}</h2>
-    ${e.ok ? `<div class="sterne">✅ ${st(e.kurz, 'kurz')}${st(e.sparsam, 'sparsam')}</div>` : ''}
-    ${why}
+    ${e.ok ? `<div class="sterne">✅ ${st(e.kurz, 'kurz')}${st(e.sparsam, 'sparsam')}</div>` : why}
     ${!e.ok ? `<div class="teil"><div class="teilbalken"><i style="width:${Math.round(e.anteil * 100)}%"></i></div><span>${Math.round(e.anteil * 100)} % erledigt</span></div>` : ''}
     <p class="lohn">+${e.gold} 🪙${!e.ok && e.gold ? ' Teillohn' : ''}${lohnHinweis()}</p>
-    ${e.ok && e.warFertig ? '<p class="hinweis">Schon gelöster Hof: weniger Lohn, neue Sterne zählen voll.</p>' : ''}
-    ${!e.ok ? `<p class="hinweis">${e.warFertig ? 'Diesen Hof hast du schon gelöst – Teillohn gibt es nur beim ersten Mal.' : `Für die ganze Aufgabe gibt es ${H.lohn} 🪙, mit ⭐⭐ noch mehr.`} Morgen kannst du es noch einmal versuchen. ${puzzleMoeglich(H) ? 'Wenn es wieder hakt, hilft dir die 🧩 Puzzle-Hilfe.' : 'Wenn du willst, nimm einen 💡 Tipp.'}</p>` : ''}
-    ${loesung}`, [...zweitKnopf(e.ok), { label: '👀 Ansehen', fn: () => haupt('🌇 Feierabend', feierabend) }, { label: '🌇 Feierabend', fn: feierabend }]);
+    <details class="mehr"><summary>${e.ok ? 'Mehr: Sterne und Musterlösung' : 'Mehr'}</summary>${mehrText}</details>`, [...zweitKnopf(e.ok), { label: '👀 Ansehen', fn: () => haupt('🌇 Feierabend', feierabend) }, { label: '🌇 Feierabend', fn: feierabend }]);
   neben([]);
   haupt('🌇 Feierabend', feierabend);
   hud();

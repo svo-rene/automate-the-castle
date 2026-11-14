@@ -1399,7 +1399,7 @@ function nachtInfo() {
   const frei = punkteFrei();
   $('#nachtBau').innerHTML = `<div class="pausebrett">${N.zwischen
     ? `<b>✅ Welle ${N.welle + 1} gehalten!</b><span class="hinweis">${frei > 0 ? `✨ ${frei} Talentpunkt${frei > 1 ? 'e' : ''} frei – jetzt verteilen! ` : ''}Bauen, reparieren, dann kommt Welle ${N.welle + 2} mit dem 👑 Anführer.</span>`
-    : '<b>⏸ Pause</b><span class="hinweis">Tippe einen Turm an zum Ausbauen – neue Türme wählst du rechts in der Bauleiste.</span>'}</div>
+    : '<b>⏸ Pause</b><span class="hinweis">Turm antippen = ausbauen.</span>'}</div>
     <div class="baupanel" id="baupanel" style="margin-top:8px"></div>`;
   renderBau();
 }
@@ -1572,10 +1572,8 @@ function nachtEnde() {
   speichern();
   N = null;
   const neuerPlatz = platzZahl(heldLevel().level) > platzZahl(vorher);   // 🪄 mit dem Level kommt ein Zauberplatz dazu
-  const xpZeile = `<p class="lohn" style="color:#c9b8ff">+${xp} XP${neu ? ` · 🧙 Level ${heldLevel().level}! +${neu} Talentpunkt${neu > 1 ? 'e' : ''}${punkteFrei() < neu ? ` (noch ${punkteFrei()} frei)` : ''}` : ''}</p>
-    ${neuerPlatz ? `<p class="lohn" style="color:#c9b8ff">🪄 Neuer Zauberplatz! Jetzt kann dein Held ${sockelZahl()} Zauber gleichzeitig einsetzen (✨ Talente → 🪄 Zauber).</p>` : ''}
-    <p class="lohn">+${gold} 🪙 <span class="hinweis">für ${besiegt} besiegte Monster${sieg ? ' und gehaltene Wellen' : ''}</span></p>
-    ${voll || ENDLOS || P.gesehen.kopfgeldTipp || !(P.gesehen.nachtgold || PROFIL.gesehen?.nachtgold) ? '' : '<p class="hinweis">💡 Volles Kopfgeld gibt es, wenn alle Aufgaben dieser Burg gelöst sind.</p>'}`;
+  const kopfgeldTipp = voll || ENDLOS || P.gesehen.kopfgeldTipp || !(P.gesehen.nachtgold || PROFIL.gesehen?.nachtgold) ? '' : '<p class="hinweis">💡 Volles Kopfgeld gibt es, wenn alle Aufgaben dieser Burg gelöst sind.</p>';
+  const durchZahl = Object.values(durchGr).reduce((s, x) => s + x.n, 0);
   hud();   // Ruhm, Level und Gold oben gleich neu (Spieltest: nach einer Niederlage stand dort noch der alte Ruhm)
   if (!voll) P.gesehen.kopfgeldTipp = true;   // Spieltest: der Hinweis kam jede Nacht – einmal reicht
   // Gebündelt statt eigener Karten (Durchlauf: nach der Nacht kamen 3–4 Karten): neue Kombos und die Kopfgeld-Erklärung stehen hier
@@ -1586,12 +1584,24 @@ function nachtEnde() {
   const kg = ERKL.find((x) => x.key === 'nachtgold');
   let kgZeile = '';
   if (kg && !ENDLOS && !P.gesehen.nachtgold && !PROFIL.gesehen?.nachtgold) { P.gesehen.nachtgold = true; (PROFIL.gesehen ||= {}).nachtgold = true; profilSpeichern(); speichern(); kgZeile = `<p class="hinweis">💡 <b>${kg.titel}:</b> ${kg.text}</p>`; }
+  // Nutzerwunsch 2026-11-14 („nach dem Sieg weniger Text“): sichtbar nur Ergebnis, Belohnung in einer Zeile, Level/Abzeichen;
+  // Ruhm-Erklärung, Tor-Liste mit Tipps, Kombos, Kopfgeld und Bilanz liegen unter „Mehr“ (Regeln stehen im 📓 Heft)
+  const lohnTeile = [gold > 0 ? `+${gold} 🪙` : "", xp > 0 ? `<span style="color:#c9b8ff">+${xp} XP</span>` : "", ruhmPlus ? `🏆 ${ruhmPlus > 0 ? "+" : "−"}${Math.abs(ruhmPlus)}` : ""].filter(Boolean);
+  const lohnZeile = lohnTeile.length ? `<p class="lohn">${lohnTeile.join(" · ")}</p>` : "";
+  const kurzZeilen = [
+    neu ? `<p class="lohn" style="color:#c9b8ff">🧙 Level ${heldLevel().level}! +${neu} Talentpunkt${neu > 1 ? 'e' : ''}</p>` : '',
+    neuerPlatz ? '<p class="lohn" style="color:#c9b8ff">🪄 Neuer Zauberplatz!</p>' : '',
+    komboRest.length ? `<p class="hinweis">🔗 Neue Kombo: ${komboRest.map((k) => `${k.ico} ${esc(k.name)}`).join(', ')}</p>` : '',
+    durchZahl && sieg ? `<p class="hinweis">🚪 ${durchZahl} Monster kam${durchZahl > 1 ? 'en' : ''} durchs Tor – Tipps unter „Mehr“.</p>` : '',
+  ].join('');
+  const mehr = `<details class="mehr"><summary>${sieg ? 'Mehr: Bilanz und Tipps' : '💡 Was hilft? Tipps und Bilanz'}</summary>
+    ${ruhmZeile}${durchZeile}${komboZeile}${kgZeile}${kopfgeldTipp}<h4>📊 Schadensbilanz</h4>${bilanz}
+    <p class="hinweis">📓 Alle Regeln zum Nachlesen: ☰ → Mein Heft</p></details>`;
   karte(sieg
-    ? `<h2>🌅 Nacht ${n} gehalten!</h2><p>${n === KAMPAGNE ? 'Ab jetzt wird es jede Nacht schwerer – wie weit kommst du?' : ENDLOS ? 'Die Burg steht. Bis zum Abend ist Zeit zum Ausbauen.' : 'Die Burg steht. Ein neuer Morgen beginnt.'}</p>
-       ${abzZeile}${xpZeile}${ruhmZeile}${durchZeile}${komboZeile}${kgZeile}<details><summary>📊 Schadensbilanz</summary>${bilanz}</details>`
-    : `<h2>🔥 Die Burg ist gefallen</h2><p>Die Monster haben die Mauer überrannt. ${ENDLOS ? 'Bis zum Abend ist sie wieder aufgebaut.' : 'Über Tag wird sie repariert.'}</p>
-       <p>${ENDLOS ? 'Baue um, verteile Talente' : 'Verdiene Gold, baue mehr Türme'} und versuche Nacht ${n} noch einmal.</p>
-       ${abzZeile}${xpZeile}${ruhmZeile}${durchZeile}${komboZeile}${kgZeile}<details open><summary>📊 Schadensbilanz</summary>${bilanz}</details>`,
+    ? `<h2>🌅 Nacht ${n} gehalten!</h2>${n === KAMPAGNE ? '<p>Ab jetzt wird es jede Nacht schwerer!</p>' : ''}
+       ${lohnZeile}${kurzZeilen}${abzZeile}${mehr}`
+    : `<h2>🔥 Die Burg ist gefallen</h2><p>Versuche Nacht ${n} noch einmal – ${ENDLOS ? 'baue um oder verteile Talente' : 'mit mehr Gold vom Tag'}.</p>
+       ${lohnZeile}${kurzZeilen}${abzZeile}${mehr}`,
     [{ label: P.beuteWahl ? '🪄 Beute ansehen' : ENDLOS ? '🌇 Zum Abend' : '🌅 Neuer Morgen', fn: P.beuteWahl ? beuteZeigen : karteStart }]);
 }
 // Offenes Beute-Angebot zeigen (nach der Nacht oder nach dem Neuladen)
@@ -1600,7 +1610,7 @@ function beuteZeigen() {
   // Beim ersten Mal die Erklärung gleich mit in die Beute-Karte (Durchlauf: eigene Karte davor war eine zu viel)
   const e = ERKL.find((x) => x.key === 'beute');
   let erkl = '';
-  if (e && !P.gesehen.beute && !PROFIL.gesehen?.beute) { erkl = `</p><p class="hinweis">💡 ${e.text}`; }
+  // Erklärung steht im Heft – die Karte sagt selbst genug (Nutzerwunsch 2026-11-14: weniger Text)
   if (e) { P.gesehen.beute = true; (PROFIL.gesehen ||= {}).beute = true; profilSpeichern(); speichern(); }
-  beuteKarte(P.beuteWahl, '🪄 Beute!', `Der Anführer hat etwas zurückgelassen. Wähle eins von beiden:${erkl}`, karteStart);
+  beuteKarte(P.beuteWahl, '🪄 Beute!', `Der Anführer hat etwas fallen lassen. Wähle eins:${erkl}`, karteStart);
 }
