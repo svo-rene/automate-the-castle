@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Automate the Castle</title>
+<link rel="stylesheet" href="vendor/fonts/fonts.css">
+<link rel="stylesheet" href="style.css">
+<style>
+  /* Knöpfe einer langen Karte (Turmblatt, Burg stärken …) bleiben unten sichtbar – auch bei 1024×768 ohne Scrollen */
+  .sheet > #sheetBtns { position: sticky; bottom: -18px; z-index: 3; background: var(--bg2); margin: 14px -20px -18px; padding: 10px 20px 14px; border-radius: 0 0 16px 16px; box-shadow: 0 -10px 12px -10px rgba(0, 0, 0, .6); }
+  .sheet > #sheetBtns:empty { display: none; }
+  /* Tablet (ab 700 px): Hauptknopf mit Text („🌙 Nacht starten“) – style.css blendet .lbl bis 899 px aus */
+  @media (min-width: 700px) { #hud #hauptBtn .lbl { display: inline; } }
+</style>
+</head>
+<body>
+<!-- Eine feste Leiste oben (wie bei Tower-Defense-Spielen): links der Stand (Tag/Nacht, Held, Gold),
+     rechts die wenigen Nebenknöpfe, der eine Hauptknopf und ☰. Unten gibt es keine Leiste – mehr Platz fürs Spiel. -->
+<header id="hud">
+  <button class="pill" id="zeitPill"></button>
+  <button class="pill hidden" id="heldPill"></button>
+  <button class="pill gold" id="goldPill"></button>
+  <button class="pill hidden" id="sternPill"></button>
+  <button class="pill hidden" id="ruhmPill"></button>
+  <span class="hudluecke"></span>
+  <div id="neben"></div>
+  <button id="hauptBtn" class="btn gold big" disabled>Python lädt …</button>
+  <button class="pill" id="menuBtn" aria-label="Menü">☰</button>
+</header>
+
+<main>
+  <!-- 🗺️ Karte: morgens Aufträge, abends Burg ausbauen -->
+  <section id="scr-karte" class="screen"></section>
+
+  <!-- ☀️ Tag: Aufgabe, Feld, Code, Protokoll -->
+  <section id="scr-tag" class="screen hidden">
+    <div id="aufgabe"></div>
+    <div class="tag-grid">
+      <div class="tag-links">
+        <div class="feldbox"><canvas id="feldCanvas"></canvas><div id="laufInfo"></div><div id="zeitleiste" class="zeitleiste hidden"></div></div>
+        <div id="archiv" class="archiv hidden"></div>
+      </div>
+      <div class="tag-rechts">
+        <div class="editor" id="editor"></div>
+        <div id="blockbox" class="hidden"></div>
+        <div id="puzzle" class="hidden"></div>
+        <div id="befehle"></div>
+        <div id="protokoll"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 🌙 Nacht: nur das Spielfeld -->
+  <section id="scr-nacht" class="screen hidden">
+    <div id="nachtInfo"></div>
+    <div class="feldreihe"><div class="nachtbox"><canvas id="nachtCanvas"></canvas><div class="bauok"></div></div><div class="bauleiste"></div></div>
+    <div id="zauberLeiste" class="zauberleiste"></div>
+    <div id="nachtBau"></div>
+  </section>
+</main>
+
+<div id="menuPop" class="hidden"></div>
+<div id="toast" class="hidden" role="status"></div>
+<div id="overlay" class="hidden">
+  <div class="sheet"><div id="sheetBody"></div><div class="row" id="sheetBtns"></div></div>
+</div>
+
+<!-- Offline: alles aus vendor/ (Pyodide 0.26.4, CodeMirror als npm-ESM, Schriften). Versionen: vendor/LIESMICH.md -->
+<script type="importmap">
+{ "imports": {
+  "@codemirror/state": "./vendor/cm/codemirror-state.js",
+  "@codemirror/view": "./vendor/cm/codemirror-view.js",
+  "@codemirror/language": "./vendor/cm/codemirror-language.js",
+  "@codemirror/commands": "./vendor/cm/codemirror-commands.js",
+  "@codemirror/autocomplete": "./vendor/cm/codemirror-autocomplete.js",
+  "@codemirror/lang-python": "./vendor/cm/codemirror-lang-python.js",
+  "@codemirror/streamparser": "./vendor/cm/codemirror-streamparser.js",
+  "@lezer/common": "./vendor/cm/lezer-common.js",
+  "@lezer/highlight": "./vendor/cm/lezer-highlight.js",
+  "@lezer/lr": "./vendor/cm/lezer-lr.js",
+  "@lezer/python": "./vendor/cm/lezer-python.js",
+  "@marijn/find-cluster-break": "./vendor/cm/marijn-find-cluster-break.js",
+  "style-mod": "./vendor/cm/style-mod.js",
+  "crelt": "./vendor/cm/crelt.js",
+  "w3c-keyname": "./vendor/cm/w3c-keyname.js"
+} }
+</script>
+<script src="vendor/pyodide/pyodide.js"></script>
+<!-- Spiel: klassische Skripte mit gemeinsamem Gültigkeitsbereich, Reihenfolge wichtig -->
+<script src="js/data.js"></script>
+<script src="js/lehrercode.js"></script>
+<script src="js/aufgaben/hoefe.js"></script>
+<script src="js/aufgaben/pruefungen.js"></script>
+<script src="js/aufgaben/archiv.js"></script>
+<script src="js/aufgaben/spaeher.js"></script>
+<script src="js/aufgaben/kornspeicher.js"></script>
+<script src="js/aufgaben/sternwarte.js"></script>
+<script src="js/aufgaben/werkstatt.js"></script>
+<script src="js/aufgaben/poststation.js"></script>
+<script src="js/aufgaben/kontor.js"></script>
+<script src="js/aufgaben/taubenschlag.js"></script>
+<script src="js/aufgaben/torwerk.js"></script>
+<script src="js/aufgaben/signalturm.js"></script>
+<script src="js/aufgaben/burg10.js"></script>
+<script src="js/aufgaben/netze.js"></script>
+<script src="js/aufgaben/abitur.js"></script>
+<script src="js/aufgaben/plus_sek1.js"></script>
+<script src="js/aufgaben/plus_lk_a.js"></script>
+<script src="js/aufgaben/plus_lk_b.js"></script>
+<script src="js/kerker.js"></script>
+<script src="js/kerker/fragen_b7.js"></script>
+<script src="js/kerker/fragen_b8.js"></script>
+<script src="js/kerker/fragen_b9.js"></script>
+<script src="js/kerker/fragen_b10.js"></script>
+<script src="js/kerker/fragen_b21.js"></script>
+<script src="js/kerker/fragen_b22.js"></script>
+<script src="js/kerker/fragen_b23.js"></script>
+<script src="js/kerker/fragen_b24.js"></script>
+<script src="js/kerker/fragen_b25.js"></script>
+<script src="js/kerker/fragen_b26.js"></script>
+<script src="js/kerker/fragen_b27.js"></script>
+<script src="js/kerker/fragen_b28.js"></script>
+<script src="js/kerker/fragen_b29.js"></script>
+<script src="js/kerker/fragen_b30.js"></script>
+<script src="js/darstellung/feld.js"></script>
+<script src="js/python.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/talente.js"></script>
+<script src="js/abzeichen.js"></script>
+<script src="js/tag.js"></script>
+<script src="js/roboter.js"></script>
+<script src="js/nacht.js"></script>
+<script src="js/figuren.js"></script>
+<script src="js/nachtbild.js"></script>
+<script src="js/steine.js"></script>
+<script src="js/karte.js"></script>
+<script src="js/heft.js"></script>
+<script src="js/main.js"></script>
+<script src="js/balance.js"></script>
+<script type="module" src="js/editor.js"></script>
+</body>
+</html>

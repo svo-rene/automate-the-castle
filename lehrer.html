@@ -1,0 +1,265 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lehrkraft · Automate the Castle</title>
+<style>
+  :root { --bg: #0d1530; --panel: #16214a; --rand: #2c3d78; --text: #e6edff; --leise: #93a3d4; --gold: #ffd84a; --gruen: #4fd18b; --gelb: #f0c040; --rot: #ff7b6b; }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text); font: 15px/1.45 system-ui, 'Segoe UI', sans-serif; }
+  header { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; padding: 12px 16px; background: #0a1026; border-bottom: 1px solid var(--rand); position: sticky; top: 0; z-index: 2; }
+  header h1 { font-size: 1.2em; margin: 0 12px 0 0; }
+  nav button, .btn { font: inherit; border-radius: 10px; border: 1px solid var(--rand); background: var(--panel); color: var(--text); padding: 7px 14px; cursor: pointer; }
+  nav button.an { background: var(--gold); color: #2a1a00; border-color: var(--gold); font-weight: 600; }
+  .btn.gold { background: var(--gold); color: #2a1a00; border-color: var(--gold); font-weight: 600; }
+  .btn.warn { border-color: var(--rot); color: var(--rot); }
+  main { padding: 16px; max-width: 1400px; margin: 0 auto; }
+  section { display: none; } section.an { display: block; }
+  .panel { background: var(--panel); border: 1px solid var(--rand); border-radius: 14px; padding: 14px 16px; margin-bottom: 14px; }
+  h2 { margin: 0 0 8px; font-size: 1.15em; }
+  .leise { color: var(--leise); font-size: .92em; }
+  textarea, input, select { font: inherit; background: #0e1838; color: #fff; border: 1px solid var(--rand); border-radius: 8px; padding: 7px 9px; }
+  textarea { width: 100%; font-family: ui-monospace, Consolas, monospace; font-size: .8em; }
+  .zeile { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-top: 8px; }
+  .tabwrap { overflow-x: auto; }
+  table { border-collapse: collapse; width: 100%; font-size: .92em; }
+  th, td { border-bottom: 1px solid #23305e; padding: 6px 8px; text-align: center; white-space: nowrap; }
+  th { position: sticky; top: 0; background: #101a3e; font-weight: 600; }
+  td.name, th.name { text-align: left; }
+  td.kap { font-variant-numeric: tabular-nums; border-radius: 6px; }
+  td.voll { background: rgba(79, 209, 139, .28); } td.teil { background: rgba(240, 192, 64, .22); } td.leer { color: #56628f; }
+  td.alt { color: var(--leise); }
+  tr.summe td { border-top: 2px solid var(--rand); font-weight: 600; }
+  .code { font: 700 clamp(2.2em, 7vw, 4.8em) ui-monospace, Consolas, monospace; letter-spacing: .06em; color: var(--gold); margin: 10px 0; user-select: all; }
+  .ziel { text-align: center; padding: 24px 12px; }
+  .ziel .gross { font-size: clamp(2.4em, 8vw, 6em); font-weight: 800; }
+  .balken { height: 46px; background: #0e1838; border: 2px solid var(--rand); border-radius: 23px; overflow: hidden; margin: 16px auto; max-width: 900px; }
+  .balken i { display: block; height: 100%; background: linear-gradient(90deg, #f0a03a, var(--gold)); transition: width .6s; }
+  #sperre { max-width: 420px; margin: 12vh auto; }
+  .fehler { color: var(--rot); }
+  .hidden { display: none !important; }
+  .kapkopf { font-size: .82em; line-height: 1.2; }
+</style>
+</head>
+<body>
+<div id="sperre" class="panel">
+  <h2>🎓 Bereich für Lehrkräfte</h2>
+  <p class="leise">Klassenübersicht, Codes für die Tafel, Klassenziel.</p>
+  <div class="zeile"><input id="pw" type="password" placeholder="Passwort" autocomplete="off"><button class="btn gold" id="pwOk">Öffnen</button></div>
+  <p class="fehler" id="pwFehler"></p>
+</div>
+
+<div id="app" class="hidden">
+<header>
+  <h1>🎓 Automate the Castle · Lehrkraft</h1>
+  <nav><button data-tab="klasse" class="an">📋 Klasse</button> <button data-tab="codes">🎟️ Codes für die Tafel</button> <button data-tab="ziel">🏆 Klassenziel</button></nav>
+  <label class="leise">Burg <select id="burgWahl"></select></label>
+</header>
+<main>
+  <section id="tab-klasse" class="an">
+    <div class="panel">
+      <h2>Fortschrittscodes einfügen</h2>
+      <p class="leise">Im Spiel: ☰ → 🎓 Lehrkraft &amp; Klasse → Fortschritt abgeben. Die Codes (beginnen mit <code>ATC1.</code>) hier hineinkopieren – beliebig viele auf einmal, z. B. alle Abgaben aus OPAL. Neuere Codes ersetzen ältere desselben Namens. Gespeichert wird nur in diesem Browser.</p>
+      <textarea id="eingabe" rows="4" placeholder="ATC1.eyJuIjoi…"></textarea>
+      <div class="zeile"><button class="btn gold" id="uebernehmen">Übernehmen</button> <label class="btn">📂 Aus Dateien (.txt) <input type="file" id="dateien" multiple accept=".txt,text/plain" class="hidden"></label> <span id="meldung" class="leise"></span></div>
+    </div>
+    <div class="panel"><div class="zeile" style="justify-content:space-between;margin-top:0"><h2 id="klasseTitel">Klasse</h2>
+      <span><button class="btn" id="csv">⬇️ Als Tabelle (CSV)</button> <button class="btn warn" id="leeren">Alle entfernen</button></span></div>
+      <p class="leise">Zellen: gelöste Hauptaufgaben je Kapitel (🟩 fertig, 🟨 angefangen). Maus auf eine Zelle zeigt, was fehlt. Graue Zeile = Code älter als 7 Tage.</p>
+      <div class="tabwrap" id="tabelle"></div>
+    </div>
+  </section>
+
+  <section id="tab-codes">
+    <div class="panel">
+      <h2>Code erstellen</h2>
+      <p class="leise">Codes gelten nur heute und lassen sich in jedem Spielstand einmal einlösen. Im Spiel: ☰ → 🎓 Lehrkraft &amp; Klasse → Code eingeben (Burgen: auch direkt in der Burgwahl).</p>
+      <div class="zeile"><select id="codeTyp"></select> <span id="codeZahlBox"></span> <button class="btn gold" id="codeMachen">Code erstellen</button></div>
+      <p class="leise" id="codeText"></p>
+    </div>
+    <div class="panel ziel hidden" id="codeAnzeige"><div class="leise" id="codeWas"></div><div class="code" id="codeWert"></div><div class="leise">gilt heute, <span id="codeTag"></span></div></div>
+  </section>
+
+  <section id="tab-ziel">
+    <div class="panel">
+      <h2>Gemeinsames Klassenziel</h2>
+      <p class="leise">Alle ⭐ der Klasse (aus den eingefügten Fortschrittscodes dieser Burg) zählen zusammen – niemand verliert, jeder Stern hilft. Ist das Ziel erreicht, gibt es eine Belohnung für alle, z. B. einen 🎁 Gold-Code.</p>
+      <div class="zeile"><label>Ziel: <input id="zielSterne" type="number" min="1" max="9999" style="width:110px"> ⭐</label>
+        <label>Belohnung: <input id="zielText" maxlength="60" placeholder="z. B. Drachen-Feiertag" style="width:240px"></label>
+        <button class="btn" id="zielCode">🏆 Ziel-Code für die Tafel</button></div>
+    </div>
+    <div class="panel ziel" id="zielAnzeige"></div>
+  </section>
+</main>
+</div>
+
+<script src="js/data.js"></script>
+<script src="js/lehrercode.js"></script>
+<script src="js/aufgaben/hoefe.js"></script>
+<script src="js/aufgaben/pruefungen.js"></script>
+<script src="js/aufgaben/archiv.js"></script>
+<script src="js/aufgaben/spaeher.js"></script>
+<script src="js/aufgaben/kornspeicher.js"></script>
+<script src="js/aufgaben/sternwarte.js"></script>
+<script src="js/aufgaben/werkstatt.js"></script>
+<script src="js/aufgaben/poststation.js"></script>
+<script src="js/aufgaben/kontor.js"></script>
+<script src="js/aufgaben/taubenschlag.js"></script>
+<script src="js/aufgaben/torwerk.js"></script>
+<script src="js/aufgaben/signalturm.js"></script>
+<script src="js/aufgaben/burg10.js"></script>
+<script src="js/aufgaben/netze.js"></script>
+<script src="js/aufgaben/abitur.js"></script>
+<script src="js/aufgaben/plus_sek1.js"></script>
+<script src="js/aufgaben/plus_lk_a.js"></script>
+<script src="js/aufgaben/plus_lk_b.js"></script>
+<script>
+'use strict';
+// --- 🎓 Lehrkraft: Klassenübersicht aus Fortschrittscodes, Codes für die Tafel, Klassenziel (alles offline, nur in diesem Browser) ---
+const $l = (s) => document.querySelector(s);
+const escL = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const SPEICHER = 'lehrer_klasse';   // bewusst ohne atc_ – gehört nicht in die Spielstand-Datei der Schüler
+let L = { schueler: {}, ziel: {}, burg: 7 };
+try { Object.assign(L, JSON.parse(localStorage.getItem(SPEICHER)) || {}); } catch { /* leer */ }
+const merken = () => { try { localStorage.setItem(SPEICHER, JSON.stringify(L)); } catch { /* privat */ } };
+
+// Passwort wie beim Endlos-Modus (gilt, bis der Tab zu ist)
+function oeffnen() { $l('#sperre').classList.add('hidden'); $l('#app').classList.remove('hidden'); zeichnen(); }
+try { if (sessionStorage.getItem('lehrer_ok') === '1') oeffnen(); } catch { /* privat */ }
+$l('#pwOk').onclick = () => {
+  if (textPruefsumme($l('#pw').value.trim().toLowerCase()) === ENDLOS_PRUEF) { try { sessionStorage.setItem('lehrer_ok', '1'); } catch { /* */ } oeffnen(); }
+  else $l('#pwFehler').textContent = 'Falsches Passwort.';
+};
+$l('#pw').onkeydown = (e) => { if (e.key === 'Enter') $l('#pwOk').click(); };
+
+for (const b of document.querySelectorAll('nav button')) b.onclick = () => {
+  for (const x of document.querySelectorAll('nav button')) x.classList.toggle('an', x === b);
+  for (const s of document.querySelectorAll('section')) s.classList.toggle('an', s.id === 'tab-' + b.dataset.tab);
+};
+$l('#burgWahl').innerHTML = Object.entries(BURGEN).map(([b, B]) => `<option value="${b}">${B.ico} ${B.name}</option>`).join('');
+$l('#burgWahl').value = L.burg;
+$l('#burgWahl').onchange = (e) => { L.burg = +e.target.value; merken(); zeichnen(); };
+
+const hauptHoefe = (k) => kapitelHoefe(k).filter((h) => !h.knobel);
+const schuelerDerBurg = () => Object.values(L.schueler).filter((s) => s.b === L.burg).sort((a, b) => a.n.localeCompare(b.n, 'de'));
+
+// --- 📋 Codes übernehmen ---
+function codesUebernehmen(text) {
+  let neu = 0, alt = 0;
+  const fehler = [];
+  for (const teil of text.match(/ATC1\.[A-Za-z0-9_-]+\.[A-Z2-9]{6}/g) || []) {
+    const d = fortschrittLesen(teil);
+    if (d.fehler || !d.n) { fehler.push(d.fehler || 'ohne Namen'); continue; }
+    const key = `${d.b}:${d.n.toLowerCase()}`, vorher = L.schueler[key];
+    // neuer = späteres Datum, sonst mehr Spieltage
+    if (vorher && (vorher.d > d.d || (vorher.d === d.d && vorher.t > d.t))) { alt++; continue; }
+    L.schueler[key] = d; neu++;
+  }
+  merken(); zeichnen();
+  $l('#meldung').textContent = `${neu} übernommen${alt ? ` · ${alt} älter als vorhanden` : ''}${fehler.length ? ` · ${fehler.length} ungültig (${[...new Set(fehler)].join(', ')})` : ''}`;
+}
+$l('#uebernehmen').onclick = () => { codesUebernehmen($l('#eingabe').value); $l('#eingabe').value = ''; };
+$l('#dateien').onchange = async (e) => { let t = ''; for (const f of e.target.files) t += (await f.text()) + '\n'; codesUebernehmen(t); e.target.value = ''; };
+$l('#leeren').onclick = () => {
+  if (!confirm(`Alle Schüler von ${BURGEN[L.burg].name} aus dieser Übersicht entfernen?`)) return;
+  for (const [k, s] of Object.entries(L.schueler)) if (s.b === L.burg) delete L.schueler[k];
+  merken(); zeichnen();
+};
+
+// --- Tabelle ---
+function zeichnen() {
+  const B = BURGEN[L.burg], liste = schuelerDerBurg(), kap = B.kapitel;
+  $l('#klasseTitel').textContent = `${B.ico} ${B.name} · ${liste.length} ${liste.length === 1 ? 'Kind' : 'Kinder'}`;
+  if (!liste.length) $l('#tabelle').innerHTML = '<p class="leise">Noch keine Fortschrittscodes für diese Burg.</p>';
+  else {
+    const heute = datumHeute(), vor7 = datumHeute(new Date(Date.now() - 7 * 864e5));
+    const kopf = kap.map((k, i) => `<th class="kapkopf" title="${escL(KAPITEL[k].name)}">${KAPITEL[k].ico}<br>K${i + 1}</th>`).join('');
+    const zeilen = liste.map((s) => {
+      const zellen = kap.map((k) => {
+        const hh = hauptHoefe(k), fertig = hh.filter((h) => s.h[h.id] !== undefined), fehlt = hh.filter((h) => s.h[h.id] === undefined);
+        const cls = fertig.length === hh.length ? 'voll' : fertig.length ? 'teil' : 'leer';
+        const sterne = fertig.reduce((a, h) => a + s.h[h.id], 0);
+        return `<td class="kap ${cls}" title="${escL(fehlt.length ? 'Fehlt: ' + fehlt.map((h) => h.titel).join(', ') : `alles gelöst · ${sterne} ⭐`)}">${fertig.length}/${hh.length}</td>`;
+      }).join('');
+      const geloest = Object.keys(s.h).length;
+      return `<tr class="${s.d < vor7 ? 'alt' : ''}"><td class="name">${escL(s.n)}</td>${zellen}<td>${geloest}</td><td>${s.s} ⭐</td><td>${s.p}</td><td>${s.t}</td><td>${s.na}</td><td>${s.l}</td>
+        <td class="${s.d < vor7 ? 'alt' : ''}">${s.d === heute ? 'heute' : s.d.split('-').reverse().slice(0, 2).join('.') + '.'}</td>
+        <td><button class="btn" data-weg="${escL(`${s.b}:${s.n.toLowerCase()}`)}" title="Entfernen">✖</button></td></tr>`;
+    }).join('');
+    // Summenzeile: wie viele haben das Kapitel fertig – zeigt, wo die Klasse steht
+    const summe = kap.map((k) => `<td>${liste.filter((s) => hauptHoefe(k).every((h) => s.h[h.id] !== undefined)).length}</td>`).join('');
+    $l('#tabelle').innerHTML = `<table><thead><tr><th class="name">Name</th>${kopf}<th>gelöst</th><th>⭐</th><th title="bestandene Prüfungen">⚜️</th><th>Tag</th><th>Nacht</th><th title="Level des Helden">Lvl</th><th>Stand</th><th></th></tr></thead>
+      <tbody>${zeilen}<tr class="summe"><td class="name">Kapitel fertig</td>${summe}<td colspan="8"></td></tr></tbody></table>`;
+    for (const b of document.querySelectorAll('[data-weg]')) b.onclick = () => { delete L.schueler[b.dataset.weg]; merken(); zeichnen(); };
+  }
+  zielZeichnen();
+  codeFormular();
+}
+$l('#csv').onclick = () => {
+  const B = BURGEN[L.burg], kap = B.kapitel;
+  const zeilen = [['Name', ...kap.map((k, i) => `K${i + 1} ${KAPITEL[k].name}`), 'Sterne', 'Pruefungen', 'Tag', 'Nacht', 'Level', 'Stand']];
+  for (const s of schuelerDerBurg()) zeilen.push([s.n, ...kap.map((k) => `${hauptHoefe(k).filter((h) => s.h[h.id] !== undefined).length}/${hauptHoefe(k).length}`), s.s, s.p, s.t, s.na, s.l, s.d]);
+  const csv = '﻿' + zeilen.map((z) => z.map((x) => `"${String(x).replace(/"/g, '""')}"`).join(';')).join('\r\n');
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' }));
+  a.download = `klasse-${B.name.replace(/\s/g, '')}-${datumHeute()}.csv`;
+  a.click();
+};
+
+// --- 🎟️ Codes für die Tafel ---
+$l('#codeTyp').innerHTML = Object.entries(LEHRER_CODES).map(([t, c]) => `<option value="${t}">${c.name}</option>`).join('');
+$l('#codeTyp').onchange = codeFormular;
+function codeFormular() {
+  const t = $l('#codeTyp').value, c = LEHRER_CODES[t], box = $l('#codeZahlBox');
+  const alt = box.dataset.typ === t + L.burg ? $l('#codeZahl')?.value : null;
+  box.dataset.typ = t + L.burg;
+  if (t === 'B') box.innerHTML = `<select id="codeZahl">${Object.entries(BURGEN).filter(([b]) => +b !== 7).map(([b, B]) => `<option value="${b}">${B.ico} ${B.name}</option>`).join('')}</select>`;
+  else if (t === 'K' || t === 'F') box.innerHTML = `<select id="codeZahl">${BURGEN[L.burg].kapitel.map((k, i) => `<option value="${i + 1}">Kapitel ${i + 1}: ${KAPITEL[k].ico} ${escL(KAPITEL[k].name)}</option>`).join('')}</select> <span class="leise">(${BURGEN[L.burg].name})</span>`;
+  else if (c.zahl) box.innerHTML = `<input id="codeZahl" type="number" min="1" max="${t === 'G' ? 5000 : 9999}" value="${t === 'G' ? 200 : L.ziel[L.burg]?.sterne || 300}" style="width:110px"> <span class="leise">${t === 'G' ? '🪙' : '⭐'}</span>`;
+  else box.innerHTML = '';
+  if (alt && $l('#codeZahl')) $l('#codeZahl').value = alt;
+  $l('#codeText').textContent = c.text;
+}
+function codeZeigen(t, zahl, was) {
+  $l('#codeWas').textContent = was;
+  $l('#codeWert').textContent = lehrerCodeMachen(t, zahl);
+  $l('#codeTag').textContent = new Date().toLocaleDateString('de-DE');
+  $l('#codeAnzeige').classList.remove('hidden');
+}
+$l('#codeMachen').onclick = () => {
+  const t = $l('#codeTyp').value, c = LEHRER_CODES[t], z = c.zahl ? Math.round(+$l('#codeZahl').value) : null;
+  if (c.zahl && !(z >= 1 && z <= 9999) || (t === 'G' && z > 5000)) { alert('Bitte eine passende Zahl eingeben.'); return; }
+  const was = t === 'B' ? `${c.name}: ${BURGEN[z].name}` : t === 'K' || t === 'F' ? `${c.name}: Kapitel ${z} „${KAPITEL[BURGEN[L.burg].kapitel[z - 1]].name}“` : c.zahl ? `${c.name}: ${z}` : c.name;
+  codeZeigen(t, z, was);
+};
+
+// --- 🏆 Klassenziel (für den Beamer) ---
+function zielZeichnen() {
+  const z = L.ziel[L.burg] || {}, liste = schuelerDerBurg(), summe = liste.reduce((a, s) => a + s.s, 0);
+  $l('#zielSterne').value = z.sterne || '';
+  $l('#zielText').value = z.text || '';
+  const anteil = z.sterne ? Math.min(1, summe / z.sterne) : 0;
+  $l('#zielAnzeige').innerHTML = z.sterne
+    ? `<div class="leise">${BURGEN[L.burg].ico} ${BURGEN[L.burg].name} · ${liste.length} Kinder</div>
+       <div class="gross">${summe} / ${z.sterne} ⭐</div><div class="balken"><i style="width:${Math.round(anteil * 100)}%"></i></div>
+       <div style="font-size:1.4em">${anteil >= 1 ? `🎉 Geschafft! ${escL(z.text || 'Belohnung für alle')}` : `Noch ${z.sterne - summe} ⭐ bis: ${escL(z.text || 'zur Belohnung')}`}</div>
+       ${anteil >= 1 ? '<p><button class="btn gold" id="zielGold">🎁 Gold-Code für alle erstellen</button></p>' : ''}`
+    : '<p class="leise">Trag oben ein Ziel ein.</p>';
+  if ($l('#zielGold')) $l('#zielGold').onclick = () => {
+    for (const b of document.querySelectorAll('nav button')) if (b.dataset.tab === 'codes') b.click();
+    $l('#codeTyp').value = 'G'; codeFormular();
+  };
+}
+const zielSpeichern = () => { L.ziel[L.burg] = { sterne: Math.max(0, Math.round(+$l('#zielSterne').value)) || 0, text: $l('#zielText').value.trim() }; merken(); zielZeichnen(); };
+$l('#zielSterne').onchange = zielSpeichern;
+$l('#zielText').onchange = zielSpeichern;
+$l('#zielCode').onclick = () => {
+  const n = L.ziel[L.burg]?.sterne;
+  if (!n) { alert('Erst ein Ziel eintragen.'); return; }
+  for (const b of document.querySelectorAll('nav button')) if (b.dataset.tab === 'codes') b.click();
+  codeZeigen('Z', n, `${LEHRER_CODES.Z.name}: ${n} ⭐`);
+};
+</script>
+</body>
+</html>

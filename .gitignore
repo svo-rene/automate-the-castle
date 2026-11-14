@@ -1,0 +1,25 @@
+# Nur das Spiel gehört online (GitHub Pages). Planung, Werkzeuge und Testseiten bleiben lokal.
+
+# Planung und Anleitungen für Claude/Agenten
+CLAUDE.md
+PLAN.md
+docs_*.md
+.claude/
+
+# Lokal starten (Windows) und Entwicklungsserver
+*.bat
+serve.py
+
+# Selbsttest
+test.html
+js/test.js
+
+# fertiger Upload-Ordner für Netlify Drop (Kopie, nicht doppelt hochladen)
+online/
+
+# Python-/System-Reste
+__pycache__/
+*.pyc
+Thumbs.db
+desktop.ini
+.DS_Store
