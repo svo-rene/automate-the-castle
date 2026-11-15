@@ -607,6 +607,9 @@ function treffe(N, e, dmg, art, quelle, durch = false, tick = false) {
   if (e.sproedeT > 0) dmg *= 1 + e.sproede;   // 💔 Sprödes Eis (Eisturm)
   if (e.markiert && /^\d+$/.test(quelle)) dmg *= 1 + SPAEHER_DMG;   // 🔭 vom Späher markiert: Türme treffen besser
   if (e.turmschild && /^\d+$/.test(quelle)) dmg *= TURMSCHILD;   // 🛡️ Turmschild: gegen Türme halb, gegen Held und Zauber voll
+  if (e.schildwall > 0 && art === 'pfeil') dmg *= 0.1;   // 👑 Orkhäuptling: Schildwall
+  if (e.nebel > 0 && /^\d+$/.test(quelle)) dmg *= 0.25;   // 👑 Geisterfürst als Nebel: Türme treffen kaum
+  if (art === 'feuer') e.feuerT = 2;   // 👑 Trollkönig: Feuer stoppt die Heilung
   if (N.T.licht_geist && e.g === 'geist' && quelle === 'held') dmg *= 3;
   // 🌌 Erzschlüssel: 🦅 Luftherrschaft (Flieger +60 % und kurz zu Boden, alle anderen −15 %), 🎲 Glücksritter (jeder 10. Treffer ×5, sonst −20 %)
   if (N.T.luft) { if (fliegt(e)) { dmg *= 1 + N.T.luft; if (!tick) e.unten = Math.max(e.unten || 0, 0.6); } else dmg *= 0.85; }
@@ -1087,7 +1090,7 @@ function feindNeu(N, art, weg, mehr = 1, chef = false) {
   const k = N.n - KAMPAGNE;
   e.turmschild = k >= 2 && weg.id !== 'brut' && (chef || id % turmschildJedes(k) === 0);
   N.feinde.push(e);
-  if (chef) N.fx.push({ typ: 'ansage', t: 2.2, text: `👑 ${CHEF[art]}!` });
+  if (chef || art === 'drache') N.fx.push({ typ: 'ansage', t: 3, text: BOSS_ART[art] ? `${chef ? '👑 ' + CHEF[art] : '🐉 Drache'}: ${BOSS_ART[art].kann}!` : `👑 ${CHEF[art]}!` });
   // 👾 Neues Monster (nur live): Karte im Monsterbuch, sobald gerade keine andere offen ist (nachtFrame)
   // (Minischleime gehören zum Schleim – dessen Karte erklärt sie schon, keine zweite Karte direkt hinterher)
   // Monsterkarte nur beim ersten Mal je Spieler (Durchlauf: in Burg 10 kamen Ratte, Wolf … noch einmal); im Monsterbuch der Burg steht es trotzdem
@@ -1102,9 +1105,74 @@ function feindNeu(N, art, weg, mehr = 1, chef = false) {
 const istBoss = (e) => GEGNER[e.g].boss || e.chef;   // lässt sich nicht wegpusten, kaum betäuben
 // 👑 Dicke Bosse (Anführer, Trolle, Drachen) spucken immer wieder kleine Monster aus, die querfeldein aufs Tor rennen
 const BRUT = { chef: { alle: 5, art: 'ratte', n: 2 }, troll: { alle: 7, art: 'minischleim', n: 2 }, drache: { alle: 4, art: 'wolf', n: 2 } };
+// 👑🐉 Boss-Eigenheiten (Nutzerwunsch 2026-11-15: „Bosse sollen sich nicht nur wie ein Schadensschwamm anfühlen“):
+// je Boss eine sichtbare Fähigkeit mit Konter. kann/hilft = Späherbericht und Ansage (je ein Satzteil).
+const BOSS_ART = {
+  ratte: { kann: 'ruft alle 5 s zwei Ratten', hilft: '🏹 Pfeilturm nah am Tor' },
+  schleim: { kann: 'zerfällt bei halbem Leben in 4 Schleimklumpen', hilft: '💣 Kanone – trifft alle auf einmal' },
+  wolf: { kann: 'heult alle 8 s – dann rennen alle Wölfe 3 s doppelt so schnell', hilft: '🧊 Eisturm bremst, 🛡️ Torwache hält fest' },
+  ork: { kann: 'hebt alle 9 s den Schildwall: 4 s lang prallen Pfeile ab', hilft: '💣 Kanone, 🌩️ Blitz und Zauber treffen trotzdem' },
+  geist: { kann: 'wird alle 8 s für 3 s zu Nebel – dann treffen Türme kaum', hilft: 'dein Held 🧙 und Zauber treffen immer' },
+  troll: { kann: 'heilt sich laufend, außer er brennt', hilft: '🔥 Feuer – 💣 Kanone oder Feuerball stoppt die Heilung' },
+  drache: { kann: 'holt alle 10 s Luft und setzt dann den nächsten Turm 5 s außer Gefecht', hilft: 'Türme verteilen – betäuben, während er Luft holt, bricht den Feueratem ab' },
+};
+const bossArt = (e) => (e.chef ? (BOSS_ART[e.g] ? e.g : null) : e.g === 'drache' ? 'drache' : null);
+const bossText = (g) => BOSS_ART[g] && `${g === 'drache' ? '🐉 Drache' : `👑 ${CHEF[g]}`}: ${BOSS_ART[g].kann}. Hilft: ${BOSS_ART[g].hilft}.`;
+function bossSchritt(N) {
+  for (const e of N.feinde) {
+    const b = bossArt(e);
+    if (!b || e.hp <= 0) continue;
+    const ruhig = e.stun > 0;
+    if (b === 'schleim' && !e.geteilt && e.hp < e.max / 2) {
+      e.geteilt = true;
+      for (let i = 0; i < 4; i++) {
+        const seite = (i - 1.5) * 0.5, weg = [[e.x, e.y], [BURG.tor.x - 1.2, BURG.y + seite * 0.5], [BURG.tor.x, BURG.y]];
+        let len = 0; for (let j = 1; j < weg.length; j++) len += Math.hypot(weg[j][0] - weg[j - 1][0], weg[j][1] - weg[j - 1][1]);
+        feindNeu(N, 'minischleim', { id: 'brut', name: 'Brut', weg, len }, (e.mehr || 1) * 1.2);
+      }
+      N.fx.push({ typ: 'boom', x: e.x, y: e.y, r: 1, t: 0.5, farbe: '120, 220, 120' }, { typ: 'ansage', t: 2, text: '🟢 Der Schleimkönig zerfällt in Klumpen!' });
+    }
+    if (b === 'wolf' && !ruhig && (e.heul = (e.heul ?? 6) - DT) <= 0) {
+      e.heul = 8;
+      for (const o of N.feinde) if (o !== e && o.g === 'wolf' && o.hp > 0) o.rasend = 3;   // das ganze Rudel
+      N.fx.push({ typ: 'frostring', x: e.x, y: e.y, r: 4, t: 0.6, farbe: '255, 120, 90' }, { typ: 'text', x: e.x, y: e.y - 0.8, text: '🐺 AUUUH!', farbe: '#ff9a7a', t: 1.2 });
+    }
+    if (b === 'ork') {
+      if (e.schildwall > 0) e.schildwall -= DT;
+      else if (!ruhig && (e.wallUhr = (e.wallUhr ?? 5) - DT) <= 0) { e.wallUhr = 9; e.schildwall = 4; N.fx.push({ typ: 'text', x: e.x, y: e.y - 0.8, text: '🛡️ Schildwall!', farbe: '#9fd0ff', t: 1.2 }); }
+    }
+    if (b === 'geist') {
+      if (e.nebel > 0) e.nebel -= DT;
+      else if ((e.nebelUhr = (e.nebelUhr ?? 4) - DT) <= 0) { e.nebelUhr = 8; e.nebel = 3; }
+    }
+    if (b === 'troll' && !(e.brand > 0) && !(e.feuerT > 0) && e.hp < e.max) {
+      e.hp = Math.min(e.max, e.hp + e.max * 0.02 * DT);
+      if ((e.heilFx = (e.heilFx || 0) - DT) <= 0) { e.heilFx = 1; N.fx.push({ typ: 'text', x: e.x, y: e.y - 0.7, text: '+💚', farbe: '#7dff9a', t: 0.8 }); }
+    }
+    if (e.feuerT > 0) e.feuerT -= DT;
+    if (b === 'drache') {
+      if (e.atem > 0) {
+        if (ruhig) { e.atem = 0; N.fx.push({ typ: 'text', x: e.x, y: e.y - 0.9, text: '💨 Feueratem verpufft!', farbe: '#cfe8ff', t: 1.2 }); continue; }
+        e.atem -= DT;
+        if (e.atem <= 0) {
+          const ziel = N.tuerme.filter((t) => !t.burg && !(t.verkohlt > 0)).sort((a, c) => Math.hypot(a.x - e.x, a.y - e.y) - Math.hypot(c.x - e.x, c.y - e.y))[0];
+          if (ziel && Math.hypot(ziel.x - e.x, ziel.y - e.y) < 7) {
+            ziel.verkohlt = 5;
+            N.fx.push({ typ: 'boom', x: ziel.x, y: ziel.y, r: 1.1, t: 0.6, farbe: '255, 120, 40' }, { typ: 'text', x: ziel.x, y: ziel.y - 1, text: '🔥 5 s außer Gefecht', farbe: '#ffb070', t: 1.4 });
+          }
+        }
+      } else if ((e.atemUhr = (e.atemUhr ?? 6) - DT) <= 0) {
+        e.atemUhr = 10; e.atem = 2;
+        N.fx.push({ typ: 'ansage', t: 1.8, text: '🐉 Der Drache holt Luft – jetzt betäuben!' });
+      }
+    }
+  }
+  for (const tw of N.tuerme) if (tw.verkohlt > 0) tw.verkohlt -= DT;
+}
 function brutSchritt(N) {
   for (const e of N.feinde.slice()) {
-    const b = e.chef ? BRUT.chef : BRUT[e.g];
+    // Brut: nur noch Rattenkönig, Troll und Drache – die anderen Anführer haben eigene Fähigkeiten (BOSS_ART)
+    const b = e.chef ? (e.g === 'ratte' ? BRUT.chef : null) : BRUT[e.g];
     if (!b || e.hp <= 0 || e.stun > 0) continue;
     if ((e.brut ??= b.alle * 0.6) > 0) { e.brut -= DT; continue; }
     e.brut = b.alle;
@@ -1144,6 +1212,7 @@ function nachtSchritt(N) {
     // bei vollem Leben volles Tempo, fast besiegt nur noch DRACHE_MUEDE davon (die Türme haben so mehr Zeit für ihn).
     if (e.g === 'drache') v *= DRACHE_MUEDE + (1 - DRACHE_MUEDE) * Math.max(0, e.hp / e.max);
     if (e.bremse > 0) { e.bremse -= DT; v *= e.bremsF; }
+    if (e.rasend > 0) { e.rasend -= DT; v *= 2; }   // 🐺 vom Leitwolf angeheult
     if (e.unten > 0) e.unten -= DT;
     if (e.stun > 0) { e.stun -= DT; v = 0; } else e.eis = false;
     // von einem Soldaten festgehalten?
@@ -1216,6 +1285,7 @@ function nachtSchritt(N) {
     // Held schneller: 🗼 Wachposten (Schild liegt) und 💫 Schwung (nach einem Sieg)
     const tempo = tw !== h ? 1 : 1 + (T.wachposten && N.schild > 0 ? T.wachposten : 0) + (N.rausch > 0 ? T.rausch : 0);
     tw.cd -= DT * tempo;
+    if (tw.verkohlt > 0) continue;   // 🐉 vom Feueratem getroffen: kurz außer Gefecht
     if (tw.cd <= 0 && schiesse(N, tw)) tw.cd = turmWerte(tw).takt;
     if (!tw.burg) turmSchritt(N, tw);
   }
@@ -1229,6 +1299,7 @@ function nachtSchritt(N) {
   spezSchritt(N);
   talentSchritt(N);
   brutSchritt(N);
+  bossSchritt(N);
   if (N.live) funkeSchritt(N);
   // Besiegte Gegner: XP, 🎆 Funkenregen (kann weitere Gegner mitreißen)
   for (let runde = 0; runde < 5; runde++) {

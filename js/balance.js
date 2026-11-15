@@ -23,6 +23,10 @@ let BOT_TURM_MEHR = 1.5;   // ab dem 4. Turm: so viel teurer kommt dem Bot jeder
 //   gut      45 → 45      5 → 5      2 → 4  (von 11 → 13 Versuchen)
 //   mittel   43 → 42      7 → 8      1 → 4  (von 10 → 13)
 //   schwach  40 → 40     10 → 10     2 → 4  (von 10 → 12)
+// 👑🐉 Boss-Eigenheiten (2026-11-15, BOSS_ART in nacht.js): Bot 50 Tage, Burg 7, vorher → nachher (verloren/Versuche je Boss)
+//   gut      Nacht 45 → 43, verloren 5 → 7    ork 0/12 → 1/13, geist 1/11 → 0/9, troll 1/11 → 2/11, drache 3/12 → 4/13
+//   mittel   Nacht 41 → 42, verloren 9 → 8    troll 3/12 → 3/12, drache 5/13 → 4/13
+//   schwach  Nacht 40 → 38, verloren 10 → 12  ork 2/13 → 2/12, geist 0/9 → 1/9, drache 4/12 → 5/13
 let BOT_AUSG = {};
 function botKaufen() {
   for (let runde = 0; runde < 30; runde++) {

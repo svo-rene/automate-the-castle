@@ -1045,6 +1045,12 @@ function zeichneNacht(cv, N, opt = {}) {
       g.restore();
       for (let j = 0; j < 7; j++) { const w = (j / 7) * Math.PI * 2; FZ.kreis(g, x + Math.cos(w) * a * (0.8 + bau), y + a * 1.0 + Math.sin(w) * a * 0.3 * (1 + bau), a * (0.25 + bau * 0.2), `rgba(210,190,150,${0.6 * (1 - bau)})`); }
     } else mitUmriss(g, () => malTurm(g, tw.art, turmStufe(tw), x, y + a * 0.2, a, jetzt, schuss, tw.wahl));   // gezeichnet (figuren.js)
+    // 🐉 Vom Feueratem getroffen: verkohlt, Rauch steigt auf, schießt nicht
+    const nt = N?.tuerme?.find((t) => t.slot === tw.slot && !t.burg);
+    if (nt?.verkohlt > 0 && !opt.mini) {
+      g.fillStyle = 'rgba(20,10,5,.45)'; g.beginPath(); g.arc(x, y, a * 1.1, 0, Math.PI * 2); g.fill();
+      malSprite(g, '💨', x + Math.sin(jetzt * 3) * a * 0.2, y - a * 1.4 - (jetzt * 0.6 % 1) * a * 0.5, a * 0.7);
+    }
     // ⬆️ Abends (und in der Pause): Der nächste Ausbau ist bezahlbar – kleines goldenes Zeichen über dem Turm
     if ((!N || opt.bauen) && !opt.mini && ausbauOffen() && (turmStufe(tw) < MAX_STUFE ? P.gold >= ausbauPreis(tw.art, turmStufe(tw))
       : (tw.vet || 0) < VETERAN_MAX && P.gold >= veteranPreis(tw.art, tw.vet || 0))) {   // 🎖️ auch: Veteran bezahlbar
@@ -1097,8 +1103,15 @@ function zeichneNacht(cv, N, opt = {}) {
     if (e.gift > 0) { g.fillStyle = 'rgba(150,230,70,.35)'; g.beginPath(); g.arc(x, y, s * 0.5, 0, Math.PI * 2); g.fill(); }
     if (e.stun > 0 && !e.eis) { g.fillStyle = 'rgba(190,160,255,.4)'; g.beginPath(); g.arc(x, y, s * 0.58, 0, Math.PI * 2); g.fill(); }
     let gemalt = false;
+    // 👑 Boss-Eigenheiten (nacht.js BOSS_ART) sichtbar: Nebelgestalt halb durchsichtig, Luftholen glüht, Schildwall, Rasen
+    if (e.atem > 0) { const gl = g.createRadialGradient(x, y, 0, x, y, s * 0.9); gl.addColorStop(0, `rgba(255,140,40,${0.35 + 0.25 * Math.sin(jetzt * 14)})`); gl.addColorStop(1, 'rgba(255,140,40,0)'); g.fillStyle = gl; g.beginPath(); g.arc(x, y, s * 0.9, 0, Math.PI * 2); g.fill(); }
+    if (e.nebel > 0) g.globalAlpha = 0.35;
     mitUmriss(g, () => { gemalt = malGegner(g, e.g, x, y - hupf, s, jetzt, e.rechts !== false, e.id); });   // gezeichnet mit Umriss (figuren.js)
     if (!gemalt) malSprite(g, gg.ico, x, y - hupf, s, e.rechts);
+    g.globalAlpha = 1;
+    if (e.schildwall > 0) { g.strokeStyle = 'rgba(160,210,255,.9)'; g.lineWidth = 3; g.beginPath(); g.arc(x, y, s * 0.6, Math.PI * 0.6, Math.PI * 1.4); g.stroke(); malSprite(g, '🛡️', x - s * 0.55, y, k * 0.4); }
+    if (e.atem > 0) malSprite(g, '🔥', x + s * 0.45, y - s * 0.25, k * (0.3 + 0.1 * Math.sin(jetzt * 12)));
+    if (e.rasend > 0) malSprite(g, '💢', x + s * 0.4, y - s * 0.5, k * 0.24);
     if (e.getroffen > 0) {   // Treffer: kurz weiß aufblitzen
       g.fillStyle = `rgba(255, 255, 255, ${e.getroffen * 4})`; g.beginPath(); g.arc(x, y - hupf, s * 0.42, 0, Math.PI * 2); g.fill();
     }
