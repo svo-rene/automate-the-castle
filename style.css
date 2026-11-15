@@ -1060,3 +1060,9 @@ details.mehr { margin-top: 10px; border-top: 1px solid var(--rand); padding-top:
 details.mehr > summary { cursor: pointer; color: var(--blau); font-size: 14px; padding: 4px 0; }
 details.mehr[open] > summary { margin-bottom: 4px; }
 details.mehr h4 { margin: 10px 0 4px; font: 15px 'Lilita One', sans-serif; font-weight: 400; }
+/* ⌨️ Selbst schreiben: Befehle nur zum Nachschauen, Tipp-Hilfen ohne fertige Befehle */
+#befehle .nachschauen { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; padding: 6px 2px; }
+#befehle .nachschauen .hinweis { width: 100%; }
+#befehle .nachschauen code { background: #0e1838; border: 1px dashed #3a4f8f; border-radius: 6px; padding: 2px 6px; font-size: 13px; color: var(--leise); user-select: text; }
+#befehle .tipphilfe { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 4px; }
+#befehle .tipphilfe button { background: #1d2a52; border: 1px solid var(--rand); border-radius: 8px; padding: 6px 12px; font: 15px 'JetBrains Mono', monospace; color: var(--text); min-width: 44px; }

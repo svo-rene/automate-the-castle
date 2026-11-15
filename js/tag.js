@@ -97,7 +97,8 @@ function tagStart(id) {
   $('#archiv').classList.toggle('korn', korn);
   $('#editor').classList.toggle('hidden', !!H.bloecke || ki);
   log(sql ? 'Schreib deine Abfrage. Die Knöpfe unten helfen beim Tippen. Dann ▶ Ausführen.'
-    : H.bloecke ? 'Tippe die Blöcke unten an. Dann ▶ Ausführen.' : H.vorlage ? 'Lass den Code laufen und schau, was passiert.' : 'Tippe die Befehle unten an oder schreib selbst. Dann ▶ Ausführen.', 'leise');
+    : H.bloecke ? 'Tippe die Blöcke unten an. Dann ▶ Ausführen.' : H.vorlage ? 'Lass den Code laufen und schau, was passiert.'
+    : H.selbst ? 'Schreib den Code selbst in das Feld. Dann ▶ Ausführen.' : 'Tippe die Befehle unten an oder schreib selbst. Dann ▶ Ausführen.', 'leise');
   if (BESSER) {
     const s = hofStand(id);
     if (s.geloest && !P.code[id]?.trim()) ED.value = s.geloest;
@@ -123,7 +124,7 @@ function tagStart(id) {
   // merkeNach: Merke erst auf der Ergebniskarte (z. B. Messlabor kl1 – sonst stünden die Antworten vor den Fragen)
   if (H.merke && !H.merkeNach && !P.gesehen['merke:' + id]) { P.gesehen['merke:' + id] = true; speichern(); lernkarte(H.merke); }
   // 👆 Beim allerersten Hof: Hand zeigt auf einen Befehl und dann auf ▶ Ausführen
-  if (!sql && !ki && !korn && !H.vorhersage && !Object.values(P.hoefe).some((s) => s.fertig)) anleitung('tag', [
+  if (!sql && !ki && !korn && !H.vorhersage && !H.vorlage && !Object.entries(P.hoefe).some(([hid, s]) => s.fertig && !hofById(hid)?.vorhersage)) anleitung('tag', [
     // erst weiter zum Ausführen, wenn ungefähr so viele Befehle dastehen wie in der Lösung
     { ziel: () => $('#befehle button'), text: 'Tippe die Befehle an', fertig: () => ED.value.split('\n').filter((z) => z.trim() && !z.trim().startsWith('#')).length >= H.loesung.split('\n').length },
     { ziel: () => $('#hauptBtn'), text: 'Jetzt ▶ Ausführen', fertig: () => !!LAUF || karteOffen() },
@@ -302,6 +303,21 @@ function zurKarte() {
 function befehlsleiste() {
   const box = $('#befehle');
   box.innerHTML = '';
+  // ⌨️ Selbst schreiben (Nutzerwunsch 2026-11-15: „sonst ist es wie am Anfang mit den Blöcken“): die Befehle stehen nur
+  // zum Nachschauen da; antippbar sind nur Tipp-Hilfen ohne Befehl (Einrücken, Klammern, Doppelpunkt – fehlen am Handy)
+  if (H.selbst && !H.bloecke) {
+    const liste = H.befehle.map((id) => (typeof id === 'string' ? BAUSTEINE[id] : id)).filter(Boolean);
+    box.innerHTML = `<div class="nachschauen"><span class="hinweis">📋 Zum Nachschauen – tippen musst du selbst:</span>
+      ${liste.map((b) => `<code>${esc(b.zeigt)}</code>`).join(' ')}</div>
+      <div class="tipphilfe"><button data-h="ein" title="Zeile einrücken">⇥ einrücken</button><button data-h="aus" title="Zeile ausrücken">⇤</button>
+      <button data-h="()">( )</button><button data-h=":">:</button><button data-h="=">=</button></div>`;
+    for (const k of box.querySelectorAll('[data-h]')) k.onclick = () => {
+      const h = k.dataset.h;
+      if (h === 'ein' || h === 'aus') ED.indent?.(h === 'ein');
+      else ED.insertText?.(h === '()' ? '(¦)' : h === '=' ? ' = ' : h);
+    };
+    return;
+  }
   for (const id of H.befehle) {
     const b = typeof id === 'string' ? BAUSTEINE[id] : id, k = document.createElement('button');
     k.textContent = (H.bloecke && b.ico ? b.ico + ' ' : '') + b.zeigt;
@@ -320,7 +336,9 @@ window.editorWoerter = (src) => {
     if (!b?.text) continue;
     const wort = b.text.match(/^\w+/)?.[0];
     if (!wort) continue;
-    aus.push({ label: b.kw ? wort : b.zeigt.trim(), text: b.text, detail: b.kw ? b.zeigt : (b.ico || ''), type: b.kw ? 'keyword' : 'function' });
+    // Selbst schreiben: Vorschlag ergänzt nur das Wort, keine fertige Zeile (for i in range(…): tippt man selbst)
+    const text = H.selbst ? (b.kw ? wort : /^\w+\(\)$/.test(b.text) ? b.text : wort) : b.text;
+    aus.push({ label: b.kw ? wort : b.zeigt.trim(), text, detail: b.kw ? b.zeigt : (b.ico || ''), type: b.kw ? 'keyword' : 'function' });
   }
   const vars = new Set([...src.matchAll(/^\s*(\w+)\s*[-+]?=[^=]/gm), ...src.matchAll(/^\s*for\s+(\w+)\s+in\b/gm)].map((m) => m[1]));
   for (const v of vars) if (!aus.some((o) => o.label.startsWith(v + '('))) aus.push({ label: v, text: v, detail: 'Variable', type: 'variable' });

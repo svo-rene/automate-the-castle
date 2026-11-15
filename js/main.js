@@ -32,6 +32,20 @@ function plainEditor(parent, { doc, onChange }) {
     },
     setMarks() {},
     focus() { ta.focus(); },
+    insertText(text) {
+      if (ta.readOnly) return;
+      const at = text.indexOf('¦'), body = text.replace(/¦/g, ''), pos = ta.selectionStart;
+      ta.setRangeText(body, pos, ta.selectionEnd, 'end');
+      if (at >= 0) ta.setSelectionRange(pos + at, pos + at);
+      ta.focus(); onChange(ta.value);
+    },
+    indent(mehr) {
+      if (ta.readOnly) return;
+      const pos = ta.selectionStart, start = ta.value.lastIndexOf('\n', pos - 1) + 1;
+      if (mehr) ta.setRangeText('    ', start, start, 'end');
+      else { const n = ta.value.slice(start, start + 4).match(/^ */)[0].length; ta.setRangeText('', start, start + n, 'end'); }
+      ta.focus(); onChange(ta.value);
+    },
   };
 }
 

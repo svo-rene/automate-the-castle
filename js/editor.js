@@ -1,7 +1,7 @@
 // Code-Editor auf Basis von CodeMirror 6 (Module über die Import-Map in index.html)
 import { EditorState, StateField, StateEffect, RangeSet, Compartment, Prec } from '@codemirror/state';
 import { EditorView, Decoration, keymap, lineNumbers, drawSelection, GutterMarker, gutterLineClass } from '@codemirror/view';
-import { defaultKeymap, history, historyKeymap, indentLess, insertNewlineAndIndent } from '@codemirror/commands';
+import { defaultKeymap, history, historyKeymap, indentLess, indentMore, insertNewlineAndIndent } from '@codemirror/commands';
 import { indentOnInput, indentUnit, syntaxHighlighting, HighlightStyle, bracketMatching } from '@codemirror/language';
 import { closeBrackets, closeBracketsKeymap, autocompletion } from '@codemirror/autocomplete';
 import { python } from '@codemirror/lang-python';
@@ -169,6 +169,20 @@ window.createEditor = (parent, { doc, onChange }) => {
       view.dispatch({ effects });
     },
     focus() { view.focus(); },
+    // ⌨️ Tipp-Hilfen (Selbst-Tippen-Höfe am Handy): Zeichen an der Schreibmarke einfügen (¦ = Schreibmarke danach),
+    // Zeile ein- bzw. ausrücken – keine fertigen Befehle
+    insertText(text) {
+      if (readOnly) return;
+      const at = text.indexOf('¦'), body = text.replace(/¦/g, ''), from = view.state.selection.main.from;
+      view.dispatch(view.state.replaceSelection(body), { userEvent: 'input', scrollIntoView: true });
+      if (at >= 0) view.dispatch({ selection: { anchor: from + at } });
+      view.focus();
+    },
+    indent(mehr) {
+      if (readOnly) return;
+      (mehr ? indentMore : indentLess)(view);
+      view.focus();
+    },
   };
 };
 window.dispatchEvent(new Event('editor-bereit'));
