@@ -85,6 +85,13 @@ function tagStart(id) {
   $('#blockbox').classList.toggle('hidden', !H.bloecke);
   ED.setReadOnly(false);
   ED.value = P.code[id] ?? H.vorlage ?? (H.bloecke || H.art ? '' : '# Schreib hier deinen Code.\n');   // SQL: leer starten (# wäre dort ein Fehler)
+  // ✏️ Lückencode im Blockmodus: frische Vorlage → Einfügestelle an die Lücke (H.einfuegen = Zeilenindex, sonst der erste leere Schleifenkopf)
+  if (H.bloecke && H.vorlage && P.code[id] == null) {
+    const z = BLOCK_ED.zeilen();
+    const leer = z.findIndex((x, i) => istKopf(x) && (i + 1 >= z.length || tiefeVon(z[i + 1]) <= tiefeVon(x)));
+    const i = H.einfuegen ?? leer;
+    if (i >= 0) { BLOCK_ED.stelleNach(i); blockRender(); }
+  }
   ED.setMarks(0, 0);
   befehlsleiste();
   $('#protokoll').innerHTML = '';
@@ -306,11 +313,11 @@ function befehlsleiste() {
   // ⌨️ Selbst schreiben (Nutzerwunsch 2026-11-15: „sonst ist es wie am Anfang mit den Blöcken“): die Befehle stehen nur
   // zum Nachschauen da; antippbar sind nur Tipp-Hilfen ohne Befehl (Einrücken, Klammern, Doppelpunkt – fehlen am Handy)
   if (H.selbst && !H.bloecke) {
-    const liste = H.befehle.map((id) => (typeof id === 'string' ? BAUSTEINE[id] : id)).filter(Boolean);
-    box.innerHTML = `<div class="nachschauen"><span class="hinweis">📋 Zum Nachschauen – tippen musst du selbst:</span>
-      ${liste.map((b) => `<code>${esc(b.zeigt)}</code>`).join(' ')}</div>
-      <div class="tipphilfe"><button data-h="ein" title="Zeile einrücken">⇥ einrücken</button><button data-h="aus" title="Zeile ausrücken">⇤</button>
-      <button data-h="()">( )</button><button data-h=":">:</button><button data-h="=">=</button></div>`;
+    // 2026-11-15 Nutzer: „beim eigenen Code die Buttons und Hilfen ganz weg, höchstens über Tipps“ – die Befehle stehen im ersten 💡 Tipp.
+    // Nur am Touch-Gerät bleiben ⇥/⇤: der Handy-Tastatur fehlt die Tab-Taste (das ist Tastatur, keine Code-Hilfe).
+    const touch = matchMedia('(pointer: coarse)').matches;
+    box.innerHTML = `<p class="hinweis">⌨️ Schreib den Code selbst. Welche Befehle es gibt, steht im 💡 Tipp.</p>${touch
+      ? '<div class="tipphilfe"><button data-h="ein" title="Zeile einrücken">⇥ einrücken</button><button data-h="aus" title="Zeile ausrücken">⇤ ausrücken</button></div>' : ''}`;
     for (const k of box.querySelectorAll('[data-h]')) k.onclick = () => {
       const h = k.dataset.h;
       if (h === 'ein' || h === 'aus') ED.indent?.(h === 'ein');
@@ -329,7 +336,7 @@ function befehlsleiste() {
 
 // Vorschläge beim Tippen (editor.js): die Befehle dieses Hofs und die Variablen, die im Code schon vorkommen
 window.editorWoerter = (src) => {
-  if (!H || (H.art && H.art !== 'sort') || H.bloecke) return [];
+  if (!H || (H.art && H.art !== 'sort') || H.bloecke || H.selbst) return [];   // ⌨️ Selbst schreiben: keine Vorschläge
   const aus = [];
   for (const id of H.befehle) {
     const b = typeof id === 'string' ? BAUSTEINE[id] : id;
@@ -354,27 +361,55 @@ const tiefeVon = (z) => Math.floor((z.match(/^ */)[0].length) / 4);
 const istKopf = (z) => z.trim().endsWith(':');
 const BLOCK_ED = {
   src: '', ro: false, cur: 0, bad: 0, tiefe: 0,
+  // ✏️ Einfügestelle (Lückencode, Nutzerwunsch 2026-11-15): { nach: Zeilenindex, tiefe } – neue Blöcke kommen hinter diese
+  // Zeile statt ans Ende. Block antippen = Stelle dahinter wählen, „⤓ ans Ende“ = wieder anhängen. null = am Ende.
+  stelle: null,
   get value() { return this.src; },
   set value(v) {
     this.src = v.split('\n').filter((z) => z.trim() && !z.trim().startsWith('#')).join('\n');
-    this.cur = this.bad = 0; this.tiefe = this.endTiefe(); blockRender();
+    this.cur = this.bad = 0; this.tiefe = this.endTiefe(); this.stelle = null; blockRender();
   },
   zeilen() { return this.src ? this.src.split('\n') : []; },
   // Wohin kommt der nächste Block? Hinter die letzte Zeile – in ihre Schleife, wenn sie ein Kopf ist
   endTiefe() { const z = this.zeilen().at(-1); return z === undefined ? 0 : tiefeVon(z) + (istKopf(z) ? 1 : 0); },
   setReadOnly(on) { this.ro = on; blockRender(); },
+  // Einfügestelle hinter Zeile i (in ihre Schleife, wenn sie ein Kopf ist)
+  stelleNach(i) {
+    const z = this.zeilen()[i];
+    if (z === undefined) { this.stelle = null; return; }
+    this.stelle = i === this.zeilen().length - 1 && !istKopf(z) ? null : { nach: i, tiefe: tiefeVon(z) + (istKopf(z) ? 1 : 0) };
+    if (!this.stelle) this.tiefe = this.endTiefe();
+  },
   insertLine(text) {
     if (this.ro) return;
     let t = text.replace('¦', '3').replace(/¦/g, '');
+    const s = this.stelle, tiefe = s ? s.tiefe : this.tiefe;
     // innere Zählschleifen heißen j, k (wie in den Lernkarten)
-    if (this.tiefe > 0 && t.startsWith('for i in range(')) t = t.replace('for i ', `for ${'ijk'[Math.min(2, this.tiefe)]} `);
-    this.src = [...this.zeilen(), '    '.repeat(this.tiefe) + t].join('\n');
-    if (istKopf(t)) this.tiefe++;
+    if (tiefe > 0 && t.startsWith('for i in range(')) t = t.replace('for i ', `for ${'ijk'[Math.min(2, tiefe)]} `);
+    if (s) {
+      const z = this.zeilen();
+      z.splice(s.nach + 1, 0, '    '.repeat(tiefe) + t);
+      this.src = z.join('\n');
+      s.nach++;
+      if (istKopf(t)) s.tiefe++;
+    } else {
+      this.src = [...this.zeilen(), '    '.repeat(this.tiefe) + t].join('\n');
+      if (istKopf(t)) this.tiefe++;
+    }
     this.bad = 0;
     blockGeaendert();
   },
   // eine Ebene nach außen – aber erst, wenn in der Schleife schon etwas liegt
   raus() {
+    const s = this.stelle;
+    if (s) {
+      const z = this.zeilen()[s.nach];
+      if (!s.tiefe) return;
+      if (!z || (istKopf(z) && tiefeVon(z) === s.tiefe - 1)) { toast('Leg erst einen Block in die Schleife.'); return; }
+      s.tiefe--;
+      blockRender();
+      return;
+    }
     const z = this.zeilen().at(-1);
     if (this.tiefe === 0) return;
     if (!z || istKopf(z)) { toast('Leg erst einen Block in die Schleife.'); return; }
@@ -388,6 +423,7 @@ const BLOCK_ED = {
     z.splice(i, 1);
     this.src = z.join('\n');
     this.tiefe = this.endTiefe();
+    if (this.stelle && i <= this.stelle.nach) { this.stelle.nach--; if (this.stelle.nach < 0) this.stelle = null; else this.stelleNach(this.stelle.nach); }
     blockGeaendert();
   },
   setMarks(cur, bad) { this.cur = cur; this.bad = bad; blockRender(); },
@@ -414,11 +450,14 @@ function blockRender() {
   const klammern = (t, ende) => Array.from({ length: t }, (_, e) => `<span class="bklammer ${ende && e === t - 1 ? 'ende' : ''}" style="--farbe:${SCHLEIFEN_FARBE[e % SCHLEIFEN_FARBE.length]}"></span>`).join('');
   const blocks = zeilen.map((z, i) => {
     const t = tiefeVon(z), zz = z.trim(), naechstT = i + 1 < zeilen.length ? tiefeVon(zeilen[i + 1]) : (B.ro ? 0 : B.tiefe);
-    return `<div class="bzeile">${klammern(t, naechstT < t)}<div class="block ${istKopf(zz) ? 'kopf' : ''} ${i + 1 === B.cur ? 'cur' : ''} ${i + 1 === B.bad ? 'bad' : ''}" ${istKopf(zz) ? `style="--farbe:${SCHLEIFEN_FARBE[t % SCHLEIFEN_FARBE.length]}"` : ''}>
+    // ✏️ Einfügestelle mitten im Programm (Lückencode): Markierung direkt hinter Zeile stelle.nach
+    const st = B.stelle && !B.ro && B.stelle.nach === i ? `<div class="bzeile">${klammern(B.stelle.tiefe, true)}<div class="bnaechst hier">✏️ ${B.stelle.tiefe > t ? 'Hier kommt der nächste Block hin – in die Schleife.' : 'Hier kommt der nächste Block hin.'}
+      ${B.stelle.tiefe ? '<button class="btn klein leise" id="blockRaus">⬅ aus der Schleife</button>' : ''}<button class="btn klein leise" id="blockEnde">⤓ ans Ende</button></div></div>` : '';
+    return `<div class="bzeile">${klammern(t, naechstT < t)}<div class="block ${istKopf(zz) ? 'kopf' : ''} ${i + 1 === B.cur ? 'cur' : ''} ${i + 1 === B.bad ? 'bad' : ''}" data-i="${i}" ${istKopf(zz) ? `style="--farbe:${SCHLEIFEN_FARBE[t % SCHLEIFEN_FARBE.length]}"` : ''}>
       <span class="bnr">${i + 1}</span><span class="bico">${ico(zz)}</span><span class="btext">${inhalt(zz, i)}</span>
-      ${B.ro ? '' : `<button class="bx" data-n="${i}" title="Block entfernen">✖</button>`}</div></div>`;
+      ${B.ro ? '' : `<button class="bx" data-n="${i}" title="Block entfernen">✖</button>`}</div></div>${st}`;
   }).join('');
-  const naechster = B.ro ? '' : `<div class="bzeile">${klammern(B.tiefe, true)}<div class="bnaechst">${B.tiefe ? '↳ Der nächste Block kommt in die Schleife.' : '➕ Hier kommt der nächste Block hin.'}
+  const naechster = B.ro || B.stelle ? '' : `<div class="bzeile">${klammern(B.tiefe, true)}<div class="bnaechst">${B.tiefe ? '↳ Der nächste Block kommt in die Schleife.' : '➕ Hier kommt der nächste Block hin.'}
     ${B.tiefe ? '<button class="btn klein leise" id="blockRaus">⬅ aus der Schleife</button>' : ''}</div></div>`;
   box.innerHTML = `<div class="bkopf"><b>🧩 Dein Programm</b>${zeilen.length && !B.ro ? `<button class="btn klein ${B.leerWarte ? 'warn' : 'leise'}" id="blockLeer">${B.leerWarte ? 'Wirklich? Nochmal tippen!' : '🗑️ Alles löschen'}</button>` : ''}</div>
     <div class="bliste">${zeilen.length ? blocks : '<p class="hinweis">Tippe unten auf einen Block – er wird hier angehängt.</p>'}${zeilen.length ? naechster : ''}</div>
@@ -432,11 +471,15 @@ function blockRender() {
   }
   const raus = $('#blockRaus');
   if (raus) raus.onclick = () => B.raus();
+  // ✏️ Block antippen = der nächste Block kommt dahinter (Lückencode); „⤓ ans Ende“ = wieder anhängen
+  if (!B.ro) for (const bl of box.querySelectorAll('.block[data-i]')) bl.onclick = (ev) => { if (ev.target.closest('.bx, .bzahl')) return; B.stelleNach(+bl.dataset.i); blockRender(); };
+  const ende = $('#blockEnde');
+  if (ende) ende.onclick = () => { B.stelle = null; B.tiefe = B.endTiefe(); blockRender(); };
   const leer = $('#blockLeer');
   // Alles löschen braucht zwei Antippen (Spieltest: ein Versehen löschte das ganze Programm)
   if (leer) leer.onclick = () => {
     if (!B.leerWarte) { B.leerWarte = true; blockGeaendert(); setTimeout(() => { if (B.leerWarte) { B.leerWarte = false; blockGeaendert(); } }, 3000); return; }
-    B.leerWarte = false; B.src = ''; B.tiefe = 0; blockGeaendert();
+    B.leerWarte = false; B.src = ''; B.tiefe = 0; B.stelle = null; blockGeaendert();
   };
   // den gerade laufenden bzw. neuesten Block zeigen (nur in der Liste scrollen, nie die Seite)
   const liste = box.querySelector('.bliste'), ziel = box.querySelector('.block.cur, .block.bad') || [...box.querySelectorAll('.block')].pop();
@@ -497,10 +540,12 @@ function laufChips(runs, zeigt = -1) {
 
 function tipp() {
   const h = hofStand(H.id);
-  if (h.tipps < H.tipps.length) h.tipps++;
+  // ⌨️ Selbst schreiben: erster Tipp = welche Befehle es gibt (die Liste unter dem Code ist weg)
+  const tipps = H.selbst && !H.bloecke ? [`Diese Befehle kannst du benutzen: ${H.befehle.map((id) => (typeof id === 'string' ? BAUSTEINE[id] : id)?.zeigt).filter(Boolean).join('  ')}`, ...H.tipps] : H.tipps;
+  if (h.tipps < tipps.length) h.tipps++;
   speichern();
-  const liste = H.tipps.slice(0, h.tipps).map((t, i) => `<p><b>${i + 1}.</b> ${esc(t)}</p>`).join('');
-  const mehr = h.tipps < H.tipps.length ? [{ label: 'Noch ein Tipp', cls: 'leise', fn: tipp }] : [];
+  const liste = tipps.slice(0, h.tipps).map((t, i) => `<p><b>${i + 1}.</b> ${esc(t)}</p>`).join('');
+  const mehr = h.tipps < tipps.length ? [{ label: 'Noch ein Tipp', cls: 'leise', fn: tipp }] : [];
   karte(`<h2>💡 Tipps</h2>${liste}`, [...mehr, { label: 'Danke' }]);
 }
 
@@ -517,7 +562,7 @@ function ausfuehren() {
     // Fehler vor dem Start kosten keinen Tag
     ED.setMarks(0, chk.err[0]);
     for (const e of document.querySelectorAll('#protokoll .err')) e.remove();   // nur der aktuelle Fehler (Spieltest: alte, schon behobene blieben stehen)
-    log(`Zeile ${chk.err[0]}: ${chk.err[1]}`, 'err');
+    log(`Zeile ${chk.err[0]}: ${chk.err[1]}${H.vorlage && /eingerückten Block/.test(chk.err[1]) ? ' ✏️ Hier fehlt noch etwas – ergänze die Lücke im Gerüst.' : ''}`, 'err');
     toast('Fehler vor dem Start – das kostet keinen Tag. 🙂');
     return;
   }
@@ -587,7 +632,7 @@ let PZ = null;
 // (mehr als 30 Zeilen) oder solche mit mehrzeiligen Texten eignen sich nicht als Puzzle
 const puzzleArt = (h) => !h.art || (h.art === 'sort' && ['karten', 'funktion'].includes(h.sortArt) && !!h.loesung
   && h.loesung.split('\n').filter((z) => z.trim() && !z.trim().startsWith('#')).length <= 30 && !/"""|'''|\\\s*$/m.test(h.loesung));
-const puzzleMoeglich = (h) => puzzleArt(h) && !h.vorhersage && !h.pruefung && !h.vorlage && !P.hoefe[h.id]?.fertig && (P.hoefe[h.id]?.versuche || 0) >= 2;
+const puzzleMoeglich = (h) => puzzleArt(h) && !h.selbst && !h.vorhersage && !h.pruefung && !h.vorlage && !P.hoefe[h.id]?.fertig && (P.hoefe[h.id]?.versuche || 0) >= 2;
 const befehlText = (b) => (typeof b === 'string' ? BAUSTEINE[b]?.text : b.text);
 function puzzleStart() {
   if (LAUF || !puzzleMoeglich(H)) return;
