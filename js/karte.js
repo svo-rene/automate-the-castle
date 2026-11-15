@@ -747,13 +747,14 @@ const WERT_NAME = {
   bremse: ['🐌 Bremst für', ' s'], bremsFaktor: ['🐌 Tempo gebremst', '×'], kette: ['⚡ Springt auf', ' Gegner'], stun: ['💫 Betäubt für', ' s'],
   feuer: ['🔥 Feuer', ' pro s'], eisfeld: ['❄️ Eisfeld', ''], frierJedes: ['🧊 Friert jeden', '. Schuss'], durchschlag: ['➡️ Durchschlag', ''], ersterDoppelt: ['⚡ Überladung', ''],
   rueckstoss: ['🌬️ Pustet zurück', ' Felder'], stoesse: ['🪢 Je Monster höchstens', '-mal'],
+  gift: ['🧪 Gift je Schicht', ' pro s'], giftProz: ['🧪 + Leben je Schicht', ' % pro s'], giftMax: ['🧪 Schichten höchstens', ''],
 };
 // 👑 Fähigkeiten der Meisterstufen (Stufe 5 und 6) als Zeile
 function turmFaehigZeile(tw) {
   const f = tw.wahl.slice(3).map((x, i) => TUERME[tw.art].wege[i + 3][x === 'a' ? 0 : 1]);
   return f.length ? `<p class="hinweis">👑 ${f.map((o) => `${o.ico} ${esc(o.name)}`).join(' · ')}</p>` : '';
 }
-const wertText = (k, v) => v === true ? 'ja' : !v ? '–' : `${String(Math.round(v * 100) / 100).replace('.', ',')}${WERT_NAME[k][1]}`;
+const wertText = (k, v) => v === true ? 'ja' : !v ? '–' : `${String(Math.round((k === 'giftProz' ? v * 100 : v) * 100) / 100).replace('.', ',')}${WERT_NAME[k][1]}`;
 
 // Werte als Tabelle; mit „nachher“ wird die Änderung hervorgehoben (alt → neu)
 function werteTabelle(v, n) {

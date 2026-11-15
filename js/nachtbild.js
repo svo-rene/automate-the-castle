@@ -1100,7 +1100,8 @@ function zeichneNacht(cv, N, opt = {}) {
     if (e.stun > 0 && e.eis) { g.fillStyle = 'rgba(180,240,255,.65)'; g.beginPath(); g.arc(x, y, s * 0.62, 0, Math.PI * 2); g.fill(); }
     else if (e.bremse > 0) { g.fillStyle = 'rgba(120,200,255,.35)'; g.beginPath(); g.arc(x, y, s * 0.56, 0, Math.PI * 2); g.fill(); }
     if (e.fluch > 0) { g.strokeStyle = 'rgba(190, 120, 255, .8)'; g.lineWidth = 2; g.setLineDash([3, 3]); g.beginPath(); g.arc(x, y, s * 0.5, 0, Math.PI * 2); g.stroke(); g.setLineDash([]); }
-    if (e.gift > 0) { g.fillStyle = 'rgba(150,230,70,.35)'; g.beginPath(); g.arc(x, y, s * 0.5, 0, Math.PI * 2); g.fill(); }
+    if (e.gift > 0 || e.gifS > 0) { g.fillStyle = 'rgba(150,230,70,.35)'; g.beginPath(); g.arc(x, y, s * 0.5, 0, Math.PI * 2); g.fill(); }
+    if (e.gifS > 0) { g.font = `bold ${Math.round(k * 0.26)}px sans-serif`; g.fillStyle = '#b8ff8a'; g.textAlign = 'center'; g.fillText(`🧪${Math.round(e.gifS)}`, x, y + s * 0.62); }   // Giftschichten
     if (e.stun > 0 && !e.eis) { g.fillStyle = 'rgba(190,160,255,.4)'; g.beginPath(); g.arc(x, y, s * 0.58, 0, Math.PI * 2); g.fill(); }
     let gemalt = false;
     // 👑 Boss-Eigenheiten (nacht.js BOSS_ART) sichtbar: Nebelgestalt halb durchsichtig, Luftholen glüht, Schildwall, Rasen

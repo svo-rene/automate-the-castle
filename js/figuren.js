@@ -339,6 +339,16 @@ function malTurm(g, art, stufe, x, y, a, t, schuss = false, wahl = []) {
       g.restore();
       break;
     }
+    case 'gift': {   // 🧪 brodelnder Giftkessel mit aufsteigenden grünen Blasen
+      g.fillStyle = FZ.rad(g, x, oy - a * 0.45, a * 0.9, [[0, 'rgba(140,255,90,.35)'], [1, 'rgba(140,255,90,0)']]); g.beginPath(); g.arc(x, oy - a * 0.45, a * 0.9, 0, Math.PI * 2); g.fill();
+      g.fillStyle = '#3a3440'; g.beginPath(); g.ellipse(x, oy - a * 0.3, a * 0.42, a * 0.32, 0, 0, Math.PI); g.fill();
+      g.fillStyle = '#7ad84a'; g.beginPath(); g.ellipse(x, oy - a * 0.32, a * 0.4, a * 0.12, 0, 0, Math.PI * 2); g.fill();
+      for (let i = 0; i < 3; i++) {
+        const p = (t * 0.8 + i / 3) % 1;
+        FZ.kreis(g, x + Math.sin(t * 3 + i * 2) * a * 0.2, oy - a * (0.4 + p * 0.8), a * (0.08 + 0.05 * (1 - p)), `rgba(150,255,100,${0.9 - p * 0.8})`);
+      }
+      break;
+    }
     case 'blitz': {   // Kupferspule mit Kugel und knisternden Bögen
       g.fillStyle = '#8a5a2a'; g.fillRect(x - a * 0.12, oy - a * 0.8, a * 0.24, a * 0.8);
       g.strokeStyle = '#d8904a'; g.lineWidth = Math.max(1.5, a * 0.06);

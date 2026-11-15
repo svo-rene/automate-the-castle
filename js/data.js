@@ -236,6 +236,26 @@ const TUERME = {
         { ico: '🧊', name: 'Eisgefängnis', text: '🪄 Zum Auslösen (alle 6 s): Der stärkste Gegner in Reichweite friert 2,5 s ein.', mod: { setze: { gefaengnis: 6 } } }],
     ],
   },
+  // 🧪 Giftturm (Nutzerwunsch 2026-11-15: Konter gegen den Drachen statt ihn schwächer zu machen): Gift stapelt sich und
+  // ignoriert Rüstung – stark gegen einzelne zähe Gegner, schwach gegen Schwärme (die sterben, bevor sich Gift stapelt).
+  // Kommt zwei Nächte vor dem ersten Drachen (Nacht 10). Werte: gift = Schaden je Schicht und Sekunde (nacht.js giftSchritt)
+  gift: {
+    ico: '🧪', name: 'Giftturm', art: 'gift', ab: 8, preis: 60,
+    text: 'Vergiftet ein Ziel. Gift stapelt sich (bis 5 Schichten), ignoriert Rüstung und frisst je Schicht einen Teil der Leben – stark gegen Bosse, schwach gegen Schwärme.',
+    basis: { dmg: 1, reich: 3.8, takt: 0.9, gift: 1.6, giftProz: 0.003, giftMax: 5, giftDauer: 4 },   // giftProz: je Schicht 0,3 % der max. Leben pro s – wächst mit dem Boss mit, bei Ratten fast nichts
+    wege: [
+      [{ ico: '☠️', name: 'Starkes Gift', text: 'Jede Schicht macht 50 % mehr Schaden.', mod: { mal: { gift: 1.5, giftProz: 1.5 } } },
+        { ico: '💨', name: 'Schnelle Pfeile', text: 'Schießt ein Drittel schneller.', mod: { mal: { takt: 0.67 } } }],
+      [{ ico: '🧫', name: 'Tiefe Wunden', text: 'Bis zu 8 Schichten statt 5.', mod: { plus: { giftMax: 3 } } },
+        { ico: '👁️', name: 'Weitblick', text: 'Reichweite +1.', mod: { plus: { reich: 1 } } }],
+      [{ ico: '🎯', name: 'Bossgift', text: 'Zielt auf den Gegner mit den meisten Leben, jeder Treffer legt 2 Schichten.', mod: { setze: { bossgift: true } } },
+        { ico: '🦠', name: 'Seuche', text: 'Stirbt ein Vergifteter, springen seine Schichten auf den nächsten Gegner.', mod: { setze: { seuche: true } } }],
+      [{ ico: '🫠', name: 'Ätzend', text: 'Vergiftete nehmen 20 % mehr Schaden – von allem.', mod: { setze: { aetzend: 0.2 } } },
+        { ico: '🐌', name: 'Lähmgift', text: 'Gegner mit 5 oder mehr Schichten laufen 30 % langsamer.', mod: { setze: { laehm: 0.3 } } }],
+      [{ ico: '☁️', name: 'Giftwolke', text: 'Jeder Treffer legt auch allen Gegnern im Umkreis von 1 Feld eine Schicht.', mod: { setze: { giftwolke: 1 } } },
+        { ico: '💀', name: 'Todesgift', text: 'Ab 8 Schichten macht das Gift 50 % mehr Schaden.', mod: { setze: { todesgift: true } } }],
+    ],
+  },
   blitz: {
     ico: '🌩️', name: 'Blitzturm', art: 'blitz', ab: 6, preis: 80,
     text: 'Der Blitz springt auf mehrere Gegner nacheinander über. Holt 🦇 Flieger kurz herunter.',
