@@ -18,6 +18,11 @@ let BOT_TURM_MEHR = 1.5;   // ab dem 4. Turm: so viel teurer kommt dem Bot jeder
 //   gut      10709 → 15422  72 % → 65 %   2920 → 4700  (Mauer 3 → 5, Wache 2 → 3)          44 → 45     6 → 5
 //   mittel    5859 →  8334  75 % → 67 %   1380 → 2640  (Mauer 2 → 4, Wache 2 → 3)          42 → 44     8 → 6
 //   schwach   2632 →  3401  83 % → 66 %    440 → 1140  (Mauer 1 → 3, Wache 1 → 2)          39 → 39    11 → 11
+// 🐉 Bosse bleiben am Tor (2026-11-15, BOSS_TAKT in nacht.js): Bot 50 Tage, Burg 7, vorher → nachher
+//            Nacht T50   verloren   davon Drachennächte (10, 14, 18 …)
+//   gut      45 → 45      5 → 5      2 → 4  (von 11 → 13 Versuchen)
+//   mittel   43 → 42      7 → 8      1 → 4  (von 10 → 13)
+//   schwach  40 → 40     10 → 10     2 → 4  (von 10 → 12)
 let BOT_AUSG = {};
 function botKaufen() {
   for (let runde = 0; runde < 30; runde++) {

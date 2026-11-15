@@ -70,7 +70,11 @@ function kombo(N, id, x, y, pause = 2.5) {
 // Live erscheint dort zuerst ein ✨ Funke: antippen = stärker (×1,5); sonst bricht er nach 3 s von selbst los.
 // Vorschau und Bot: sofort, ohne Bonus.
 const KOMBO_LADUNG = 14, AUSBRUCH_ALLE = 16, FUNKE_DAUER = 4.5, AUSBRUCH_R = 3.2;
-const BOSS_TOR_ANTEIL = 0.45;
+// 🐉 Bosse am Tor (Nutzerwunsch 2026-11-15: „ein Drache mit voller HP an der Mauer macht festen Schaden und verschwindet –
+// das ist nie gefährlich“): 👑 Anführer und 🐉 Drache bleiben am Tor und schlagen alle BOSS_TAKT s mit festem Schaden zu,
+// bis sie besiegt sind oder die Mauer fällt. Kleine Monster wie bisher: einmal Schaden, dann sind sie durch.
+const BOSS_TAKT = 3;
+const bossSchlag = (e) => Math.max(1, Math.ceil(GEGNER[e.g].schaden * (e.chef ? 3 : 1) / 3));   // ⅓ des alten Einmal-Schadens, dafür immer wieder
 const ausbruchDmg = (N) => 24 + 6 * N.n;   // Spieltest: 16 + 4n war kaum zu spüren (Funkenregen machte mehr)
 function ausbruchBereit(N) {
   const zahl = N.komboZahl || {}, id = Object.keys(zahl).sort((a, b) => zahl[b] - zahl[a])[0];
@@ -1161,11 +1165,27 @@ function nachtSchritt(N) {
       e.gewarnt = true;
       N.fx.push({ typ: 'ansage', t: 2.2, text: `⚠️ ${e.chef ? '👑 ' + CHEF[e.g] : GEGNER[e.g].name} ist gleich am Tor!` });
     }
-    if (e.rest <= 0 && e.hp > 0) {
-      let dmg = Math.max(1, GEGNER[e.g].schaden * (e.chef ? 3 : 1) - (N.T.tor_schutz || 0));
-      // Spieltest 2026-11-13: Drache/Anführer am Tor = −12 bis −15 bei 12–18 Mauer → jede 4. Nacht Alles-oder-nichts.
-      // Ein einzelner Boss nimmt höchstens BOSS_TOR_ANTEIL der Mauer – verlieren geht nur, wenn noch mehr durchkommt.
-      if (e.chef || GEGNER[e.g].boss) dmg = Math.min(dmg, Math.max(2, Math.ceil(N.max * BOSS_TOR_ANTEIL)));
+    // 👑🐉 Bosse bleiben am Tor stehen und schlagen alle BOSS_TAKT s zu (betäubt/eingefroren nicht) – bis sie besiegt sind
+    if (e.rest <= 0 && e.hp > 0 && istBoss(e)) {
+      e.d = e.p.len;
+      const name = e.chef ? CHEF[e.g] : GEGNER[e.g].name;
+      if (!e.amMauer) {
+        e.amMauer = true; e.torUhr = 0.6;
+        e.durchEintrag = { name, dmg: 0, chef: e.chef, g: e.g, bleibt: true };
+        (N.durch ||= []).push(e.durchEintrag);
+        N.fx.push({ typ: 'ansage', t: 3, text: `${e.chef ? '👑' : '🐉'} ${name} schlägt aufs Tor ein: −${bossSchlag(e)} 🧱 alle ${BOSS_TAKT} s – besiege ihn!` });
+      }
+      if (!(e.stun > 0)) e.torUhr -= DT;
+      if (e.torUhr <= 0) {
+        e.torUhr = BOSS_TAKT;
+        const dmg = Math.max(1, bossSchlag(e) - (N.T.tor_schutz || 0));
+        mauerTreffer(N, dmg, e);
+        e.durchEintrag.dmg += dmg;
+        N.wackeln = 0.3;
+        N.fx.push({ typ: 'tor', t: 0.4 }, { typ: 'text', x: BURG.tor.x + 0.3, y: BURG.y - 0.6, text: `-${dmg} 🧱`, farbe: '#ff6b6b', t: 1 });
+      }
+    } else if (e.rest <= 0 && e.hp > 0) {
+      const dmg = Math.max(1, GEGNER[e.g].schaden - (N.T.tor_schutz || 0));
       e.amTor = true;
       mauerTreffer(N, dmg, e);
       N.wackeln = 0.3;
@@ -1174,7 +1194,7 @@ function nachtSchritt(N) {
       (N.durch ||= []).push({ name, dmg, chef: e.chef, g: e.g });
       N.fx.push({ typ: 'tor', t: 0.4 }, { typ: 'text', x: BURG.tor.x + 0.3, y: BURG.y - 0.6, text: `-${dmg} 🧱`, farbe: '#ff6b6b', t: 1 },
         { typ: 'durch', g: e.g, x: e.x, y: e.y, chef: e.chef, t: 0.7 });
-      if (e.chef || istGross(e.g)) N.fx.push({ typ: 'ansage', t: 2.4, text: `🚪 ${e.chef ? '👑 ' : ''}${name} bricht durchs Tor! −${dmg} 🧱` });
+      if (istGross(e.g)) N.fx.push({ typ: 'ansage', t: 2.4, text: `🚪 ${name} bricht durchs Tor! −${dmg} 🧱` });
     }
   }
   if (N.wackeln > 0) N.wackeln -= DT;
@@ -1542,9 +1562,9 @@ function nachtEnde() {
   const bilanz = bilanzHtml(N.schaden, N.turmArt, N.ende !== 'gehalten' || !!(N.durch || []).length, N.ende !== 'gehalten');
   // 🚪 Wer kam durchs Tor? (damit klar ist, warum die Mauer Leben verloren hat)
   const durchGr = {};
-  for (const d of N.durch || []) { const x = (durchGr[d.name] ||= { n: 0, dmg: 0, chef: d.chef }); x.n++; x.dmg += d.dmg; }
+  for (const d of (N.durch || []).filter((x) => x.dmg > 0)) { const x = (durchGr[d.name] ||= { n: 0, dmg: 0, chef: d.chef }); x.n++; x.dmg += d.dmg; }
   const durchListe = Object.entries(durchGr).sort((a, b) => b[1].dmg - a[1].dmg).map(([name, x]) => `${x.chef ? '👑 ' : ''}${x.n > 1 ? `${x.n}× ` : ''}${name} (−${x.dmg} 🧱)`).join(', ');
-  const durchZeile = durchListe ? `<p class="hinweis">🚪 <b>Durchs Tor gekommen:</b> ${durchListe}. Wer das Tor erreicht, rennt hindurch und beschädigt dabei die Mauer – Anführer dreifach. Ist die Mauer bei 0, fällt die Burg.</p>${durchTipps(N.durch)}` : '';
+  const durchZeile = durchListe ? `<p class="hinweis">🚪 <b>Durchs Tor gekommen:</b> ${durchListe}. Kleine Monster rennen durchs Tor (einmal Schaden). 👑 Anführer und 🐉 Drachen bleiben am Tor und schlagen alle ${BOSS_TAKT} s zu, bis du sie besiegst. Ist die Mauer bei 0, fällt die Burg.</p>${durchTipps(N.durch)}` : '';
   // XP: je besiegtem Gegner, dazu ein Bonus für jede gehaltene Welle; verloren = halbe XP
   const xp = Math.round(sieg ? N.xp + welleXp(n) * (N.ruhm || 1) : N.xp / 2), vorher = N.levelStart ?? heldLevel().level;
   P.xp += xp;

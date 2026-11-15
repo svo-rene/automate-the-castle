@@ -293,7 +293,7 @@ const ERKL = [
   { key: 'willkommen', basis: true, titel: '🏰 Tag, Abend und Nacht', text: 'Tagsüber löst du Aufgaben und verdienst damit 🪙 Gold. Abends baust du mit dem Gold Türme. Nachts greifen Monster an – Türme und dein Held 🧙 verteidigen die Burg.' },
   { key: 'tag', basis: true, titel: '☀️ Der Tag', text: 'Ein gelöster Hof bringt 🪙, jeder ⭐ mehr. Pro Tag hast du einen Versuch.' },
   { key: 'bauen', titel: '🌇 Der Abend: Türme bauen', text: 'Wähle in der 🔨 Bauleiste einen Turm, tippe neben den Weg und dann auf „🔨 bauen“. In Kurven trifft er am meisten.' },
-  { key: 'nacht', basis: true, titel: '🌙 Die Nacht', text: 'Zwei Wellen, am Ende ein 👑 Anführer. In der Pause dazwischen kannst du bauen – dann oben „▶ Welle 2“.' },
+  { key: 'nacht', basis: true, titel: '🌙 Die Nacht', text: 'Zwei Wellen, am Ende ein 👑 Anführer. Kleine Monster am Tor kosten einmal Mauer; Anführer und Drachen bleiben dort und schlagen alle 3 s zu, bis du sie besiegst.' },
   { key: 'nachtgold', titel: '🪙 Kopfgeld in der Nacht', text: 'Jedes besiegte Monster bringt etwas 🪙. Das meiste Gold gibt es aber für Höfe am Tag.' },
   { key: 'steine', titel: '🪄 Zauber', text: 'Nur Zauber im Zauberplatz wirken. Einsetzen: oben ✨ Talente → Reiter 🪄 Zauber.' },
   { key: 'beute', titel: '👑 Beute vom Anführer', text: 'Der erste 👑 Anführer lässt sicher einen Zauber fallen, spätere manchmal. Du wählst nach der Nacht einen von zwei.' },
