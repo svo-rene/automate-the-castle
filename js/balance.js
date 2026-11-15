@@ -42,6 +42,12 @@ let BOT_TURM_MEHR = 1.5;   // ab dem 4. Turm: so viel teurer kommt dem Bot jeder
 //   gut      45 → 50    5 → 0      78/145/318 s (900) → 68/103/124 (173)  Katapult 25 %, Funkenregen 16 %, Feuerball 15 % → Pfeil 18, Funkenregen 15, Katapult 14, Kettenblitz 12, Gift 8, Eiswelle 8
 //   mittel   44 → 47    6 → 3      82/129/192 s (757) → 75/106/142 (221)  Katapult 26, Feuerball 16 → Katapult 20, Funkenregen 13, Pfeil 11, Feuerball 9, Kettenblitz 8
 //   schwach  40 → 42   10 → 9      74/120/126 s (177) → 78/99/109 (152)   Feuerball 21, Katapult 18 → Feuerball 20, Katapult 15, Gift 11, Kanone 11
+// 🤖 Talent-Vorschlag + Endlos steiler (2026-11-15: RUHM_LEBEN_JE 0,06, RUHM_TEMPO 0,004). Bot 50 Tage, Burg 7:
+//   gut      Nacht 49, verloren 1 (N17), Ruhm T50 237, Dauer 67/102/127 s (max 170)
+//   mittel   Nacht 44, verloren 7, Ruhm pendelt um 50, Dauer 79/95/118 s (max 168), Kampagne 0/10 verloren
+//   schwach  Nacht 38, verloren 12, Ruhm um 25–50, Dauer 76/101/103 s (max 138), Kampagne 3/13 (Leitwolf/Orkhäuptling)
+// Fall Nutzer „Drache bei Ruhm 115 steht mit 100 % am Tor“: Bot gut nach 22 Tagen, Ruhm 115 → Drache N14 (7613 Leben)
+// stirbt nach 75 s, N18 (15321) nach 100 s, beide erreichen das Tor nicht.
 let BOT_AUSG = {}, BOT_SCHADEN = {};
 function botKaufen() {
   for (let runde = 0; runde < 30; runde++) {

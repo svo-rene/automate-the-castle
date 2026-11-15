@@ -1066,3 +1066,7 @@ details.mehr h4 { margin: 10px 0 4px; font: 15px 'Lilita One', sans-serif; font-
 #befehle .nachschauen code { background: #0e1838; border: 1px dashed #3a4f8f; border-radius: 6px; padding: 2px 6px; font-size: 13px; color: var(--leise); user-select: text; }
 #befehle .tipphilfe { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 4px; }
 #befehle .tipphilfe button { background: #1d2a52; border: 1px solid var(--rand); border-radius: 8px; padding: 6px 12px; font: 15px 'JetBrains Mono', monospace; color: var(--text); min-width: 44px; }
+/* 🤖 Talent-Vorschlag: goldener, pulsierender Ring um den empfohlenen Knoten; Knopf „Für mich verteilen“ im Kopf */
+.talentsvg .tn.vorschlag circle { stroke: #ffd84a; stroke-width: 5; animation: vorschlagPuls 1.2s ease-in-out infinite; }
+@keyframes vorschlagPuls { 50% { stroke-opacity: .35; } }
+.tkopf #talentAuto { margin-left: auto; }

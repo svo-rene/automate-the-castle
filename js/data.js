@@ -144,12 +144,12 @@ const RUHM_QUAD = 0.0004, RUHM_LOHN = 0.012, RUHM_STEIL_AB = 30, RUHM_KUBIK = 0.
 // 2026-11-15 Nutzer: „im späten Spiel schießt man auf eine Wand, die keinen Schaden nimmt“ – bei 110 Ruhm hatten Monster ×25 Leben
 // (Ruhm³-Glied). Jetzt wachsen die Leben gleichmäßig und höchstens auf RUHM_LEBEN_MAX; mehr Ruhm bringt stattdessen ⭐ Elite-Monster
 // mit Eigenschaften, die man kontern muss (ELITE in nacht.js). Ruhm-Lohn wächst weiter mit (RUHM_LOHN).
-const RUHM_LEBEN_JE = 0.04, RUHM_LEBEN_MAX = 99;   // gleichmäßig, ohne Deckel: Ruhm 100 → ×5, 200 → ×9 (früher ×25 schon bei 110); Kampagne höchstens ×RUHM_KAMPAGNE_MAX; Gold wächst langsamer (RUHM_LOHN_MAX)   // gleichmäßig: Ruhm 50 → ×2, 100 → ×3, 250 → ×6 (Deckel ×3 war zu leicht: Bot „mittel“ ohne Niederlage bis Ruhm 292)
+const RUHM_LEBEN_JE = 0.06, RUHM_LEBEN_MAX = 99;   // gleichmäßig, ohne Deckel: Ruhm 100 → ×7, 200 → ×13 (früher ×25 schon bei 110); Kampagne höchstens ×RUHM_KAMPAGNE_MAX; Gold wächst langsamer (RUHM_LOHN_MAX)   // gleichmäßig: Ruhm 50 → ×2, 100 → ×3, 250 → ×6 (Deckel ×3 war zu leicht: Bot „mittel“ ohne Niederlage bis Ruhm 292)
 const ruhmFaktor = (r = ruhm()) => Math.min(RUHM_LEBEN_MAX, 1 + RUHM_LEBEN_JE * r);
 const RUHM_KAMPAGNE_MAX = 2;   // Nacht 1–10: Ruhm macht Monster höchstens doppelt so zäh (nacht.js nachtZustand)
 // Endlos: Monster laufen mit Ruhm schneller (+RUHM_TEMPO je Punkt) – Gift und Kettenblitz treffen einen Anteil der Leben,
 // mehr Leben allein machen es dort kaum schwerer; Tempo sorgt dafür, dass es irgendwann eng wird, ohne die Nacht zu verlängern
-const RUHM_TEMPO = 0.002;
+const RUHM_TEMPO = 0.004;   // 2026-11-15 Nutzer: Endlos darf schneller ansteigen (0,002: guter Bot ohne Niederlage bis Ruhm 277)
 // ⭐ Elite-Anteil: ab ELITE_AB Ruhm wird ein wachsender Teil der Monster Elite (höchstens die Hälfte)
 const ELITE_AB = 25;
 const eliteAnteil = (r = ruhm()) => Math.max(0, Math.min(0.5, (r - ELITE_AB) / 120));

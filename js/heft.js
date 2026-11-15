@@ -297,7 +297,7 @@ const ERKL = [
   { key: 'nachtgold', titel: '🪙 Kopfgeld in der Nacht', text: 'Jedes besiegte Monster bringt etwas 🪙. Das meiste Gold gibt es aber für Höfe am Tag.' },
   { key: 'steine', titel: '🪄 Zauber', text: 'Nur Zauber im Zauberplatz wirken. Einsetzen: oben ✨ Talente → Reiter 🪄 Zauber.' },
   { key: 'beute', titel: '👑 Beute vom Anführer', text: 'Der erste 👑 Anführer lässt sicher einen Zauber fallen, spätere manchmal. Du wählst nach der Nacht einen von zwei.' },
-  { key: 'talente', titel: '✨ Das Talentnetz', text: 'Pro Level 1 Punkt. Tippe einen leuchtenden Knoten neben der Mitte 🧙 zweimal an, um ihn zu lernen.' },
+  { key: 'talente', titel: '✨ Das Talentnetz', text: 'Pro Level 1 Punkt. Der goldene Ring zeigt einen guten nächsten Knoten – zweimal antippen lernt ihn. Oder oben „🤖 Für mich verteilen“.' },
   { key: 'kombo', titel: '🔗 Kombos', text: 'Zwei Zauber verschiedener Richtungen im Zauberplatz wirken zusammen als Kombo. Nachlesen: ✨ Talente → 📖 Kombo-Buch.' },
   { key: 'stuetz', titel: '➕ Verstärker', text: 'Dieser Zauber hat jetzt einen ➕ Platz. Setz einen Verstärker ein: ✨ Talente → 🪄 Zauber → Zauber antippen.' },
   { key: 'stuetzkauf', titel: '🛒 Verstärker-Plätze kaufen', text: 'Mehr ➕ Plätze kaufen: ✨ Talente → 🪄 Zauber → Zauber antippen.' },

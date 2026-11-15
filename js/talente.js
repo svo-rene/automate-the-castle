@@ -582,17 +582,18 @@ function netzRender() {
     const plan = (wegSet.has(t.id) || P.talente.includes(t.id)) && (wegSet.has(n) || P.talente.includes(n)) && !an;
     kanten += `<line x1="${t.x * U}" y1="${t.y * U}" x2="${TALENTE[n].x * U}" y2="${TALENTE[n].y * U}" class="tk ${an ? 'an' : ''} ${plan ? 'plan' : ''}"/>`;
   }
+  const vorschlag = talentVorschlag();   // 🤖 goldener Ring: empfohlener nächster Knoten
   const r = { mitte: 0.5, key: 0.5, wunder: 0.52, fund: 0.36, gross: 0.42, wahl: 0.36, faehig: 0.34, klein: 0.3, juwel: 0.44 };
   const knoten = sichtbar.map((t) => {
     const an = P.talente.includes(t.id), geht = !an && !talentSperre(t.id) && t.id !== 'mitte';
     const fern = !an && d[t.id] > 1 && TSEL !== t.id && !wegSet.has(t.id);
     const farbe = t.farbe ? ` style="--farbe:${t.farbe}"` : '';
-    return `<g class="tn ${t.typ} ${t.erz ? 'erz' : ''} ${an ? 'an' : ''} ${geht ? 'geht' : ''} ${fern ? 'fern' : ''} ${wegSet.has(t.id) ? 'plan' : ''} ${TSEL === t.id ? 'sel' : ''}" data-t="${t.id}"${farbe} transform="translate(${t.x * U},${t.y * U})">
+    return `<g class="tn ${t.typ} ${t.erz ? 'erz' : ''} ${an ? 'an' : ''} ${geht ? 'geht' : ''} ${fern ? 'fern' : ''} ${wegSet.has(t.id) ? 'plan' : ''} ${TSEL === t.id ? 'sel' : ''} ${t.id === vorschlag ? 'vorschlag' : ''}" data-t="${t.id}"${farbe} transform="translate(${t.x * U},${t.y * U})">
       <circle r="${r[t.typ] * U}"/>
       <text style="font-size:${r[t.typ] * U * 0.95}px">${t.typ === 'juwel' ? juwelVon(t.id)?.ico || t.ico : t.ico}</text></g>`;
   }).join('');
   const L = heldLevel();
-  $('#talentBaum').innerHTML = `<div class="tkopf"><h2>✨ Talente</h2><span>🧙 Level ${L.level} · ${L.rest}/${L.noetig} XP · <b>${punkteFrei()} Punkt${punkteFrei() === 1 ? '' : 'e'} frei</b></span></div>
+  $('#talentBaum').innerHTML = `<div class="tkopf"><h2>✨ Talente</h2><span>🧙 Level ${L.level} · ${L.rest}/${L.noetig} XP · <b>${punkteFrei()} Punkt${punkteFrei() === 1 ? '' : 'e'} frei</b></span>${vorschlag ? '<button class="btn gold klein" id="talentAuto" title="Lernt alle freien Punkte nach einem Vorschlag – der goldene Ring zeigt den nächsten">🤖 Für mich verteilen</button>' : ''}</div>
     ${steinZeile()}
     <div class="netzrahmen"><svg class="talentsvg ganz" preserveAspectRatio="xMidYMid meet">${stuecke}${juwelKreise}${cluster}${kanten}${knoten}</svg>
       <div class="zoomknoepfe"><button data-z="1.4" title="Näher heran">➕</button><button data-z="0.7" title="Weiter weg">➖</button><button data-z="0" title="Ganzes Netz">🧭</button></div>
@@ -600,6 +601,7 @@ function netzRender() {
   $('#talentInfo').innerHTML = '';   // Info schwebt im Netz, direkt beim angetippten Knoten (Nutzerwunsch: Knopf nah an der Auswahl)
   netzZoom({ x0, y0, w, h, U });
   $('#zuSteinen').onclick = () => { TTAB = 'steine'; talentRender(); };
+  if ($('#talentAuto')) $('#talentAuto').onclick = talenteVerteilen;
   // 📱 Nutzerwunsch 2026-11-15: am Handy liegt der Lernen-Knopf weit unten – den gewählten Knoten nochmal antippen = lernen
   for (const g of document.querySelectorAll('#talentBaum [data-t]')) g.onclick = () => {
     if (TZ.gezogen) return;
@@ -723,6 +725,28 @@ function talentInfo() {
 }
 // Lernbar = nicht die Mitte, noch nicht gelernt, nichts sperrt (Punkt frei, angrenzend …)
 const talentLernbar = (id) => id !== 'mitte' && !!TALENTE[id] && !P.talente.includes(id) && !talentSperre(id);
+// 🤖 Talent-Vorschlag (Nutzerwunsch 2026-11-15: niemanden mit dem Netz überfordern, ohne Stufenwahl am Start):
+// Der empfohlene nächste Knoten leuchtet golden, „🤖 Für mich verteilen“ lernt alle freien Punkte nach dem Vorschlag.
+// Ziele der Reihe nach (große Knoten), jeweils der nächste lernbare Schritt dorthin; sonst ein Knoten nah an der Mitte.
+const VORSCHLAG_ZIELE = ['Abpraller', 'Schnellzauber', 'Pfeilhagel', 'Funkenregen', 'Steinregen', 'Schockfrost', 'Kettenreaktion', 'Echo', 'Blitzableiter', 'Meisterwerkstatt', 'Aufladen', 'Bollwerk'];
+function talentVorschlag() {
+  if (punkteFrei() <= 0) return null;
+  for (const name of VORSCHLAG_ZIELE) {
+    const z = Object.values(TALENTE).find((t) => t.typ === 'gross' && t.name === name);
+    if (!z || P.talente.includes(z.id)) continue;
+    const schritt = talentWeg(z.id).find((id) => talentLernbar(id));
+    if (schritt) return schritt;
+  }
+  return Object.values(TALENTE).filter((t) => t.typ !== 'key' && talentLernbar(t.id)).sort((a, b) => Math.hypot(a.x, a.y) - Math.hypot(b.x, b.y))[0]?.id || null;
+}
+function talenteVerteilen() {
+  const gelernt = [];
+  for (let id = talentVorschlag(); id && gelernt.length < 99; id = talentVorschlag()) { P.talente.push(id); gelernt.push(TALENTE[id]); }
+  if (!gelernt.length) return;
+  speichern();
+  talentRender();
+  toast(`🤖 ${gelernt.length} Punkt${gelernt.length === 1 ? '' : 'e'} verteilt: ${gelernt.map((t) => `${t.ico} ${t.name}`).join(', ')}`, 4500);
+}
 function talentLernen(id) {
   const t = TALENTE[id];
   P.talente.push(id);
