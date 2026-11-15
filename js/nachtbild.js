@@ -1118,6 +1118,7 @@ function zeichneNacht(cv, N, opt = {}) {
     }
     if (e.stun > 0 && !e.eis) malSprite(g, e.wurzel > 0 ? '🪢' : '💫', x + Math.cos(jetzt * 9) * s * 0.3, y - s * 0.6, k * 0.3);
     if (gg.boss || e.chef) malSprite(g, '👑', x, y - s * 0.72, k * 0.32);
+    if (e.elite) { g.strokeStyle = 'rgba(255,216,74,.85)'; g.lineWidth = 2; g.beginPath(); g.arc(x, y, s * 0.55, 0, Math.PI * 2); g.stroke(); malSprite(g, ELITE_INFO[e.elite].ico, x + s * 0.42, y - s * 0.55, k * 0.24); }   // ⭐ Elite: goldener Ring + Eigenschaft
     if (e.markiert) malSprite(g, '🎯', x - s * 0.42, y - s * 0.5, k * 0.22);   // 🔭 vom Späher erkannt
     if (e.turmschild) {
       // 🛡️ Turmschild: schimmernder Sechseck-Ring um das Monster, kleines Schild-Zeichen rechts oben

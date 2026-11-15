@@ -82,7 +82,8 @@ const SCHWIERIG = {
   normal: { ico: '🟡', name: 'Normal', leben: 1, text: 'So ist das Spiel gedacht.' },
   schwer: { ico: '🔴', name: 'Schwer', leben: 1.35, text: 'Monster haben 35 % mehr Leben. Für Profis.' },
 };
-const schwierig = () => SCHWIERIG[P.schwierigkeit] || SCHWIERIG.normal;
+// 2026-11-15 Nutzer: keine Schwierigkeitswahl mehr – Ruhm regelt die Schwierigkeit (wer verliert, verliert Ruhm). Alte Stände: immer normal
+const schwierig = () => SCHWIERIG.normal;
 const VERKAUF_ANTEIL = 0.6;   // 💰 Turm verkaufen: so viel vom Gesamtpreis (Bau + Ausbauten) kommt zurück
 // früher gekaufte Feldplätze: alte Stände bekommen das Gold zurück (laden)
 const PLATZ_PREIS = [50, 70, 100, 130, 170, 220, 280, 350, 430, 520, 620];
@@ -139,9 +140,24 @@ const ruhm = () => Math.max(0, Math.round(P.ruhmWert || 0));
 // Darum ab RUHM_STEIL_AB zusätzlich kubisch (unten bleibt alles wie bisher – trifft Mittlere und Schwache kaum)
 // und eine 🔥 Glanzserie: jede weitere saubere Nacht in Folge bringt +1 extra (höchstens RUHM_SERIE_MAX).
 // 2026-11-13 Spieltest: gute Spieler hielten bei Ruhm 78 jede Nacht ohne Kratzer → steil schon ab 40 (vorher 50 / 0,000006).
-const RUHM_QUAD = 0.0004, RUHM_LOHN = 0.02, RUHM_STEIL_AB = 30, RUHM_KUBIK = 0.00003, RUHM_SERIE_MAX = 3;
-const ruhmFaktor = (r = ruhm()) => 1 + RUHM_JE * r + RUHM_QUAD * r * r + RUHM_KUBIK * Math.max(0, r - RUHM_STEIL_AB) ** 3;
-const ruhmLohn = (r = ruhm()) => 1 + RUHM_LOHN * r;
+const RUHM_QUAD = 0.0004, RUHM_LOHN = 0.012, RUHM_STEIL_AB = 30, RUHM_KUBIK = 0.00003, RUHM_SERIE_MAX = 3;
+// 2026-11-15 Nutzer: „im späten Spiel schießt man auf eine Wand, die keinen Schaden nimmt“ – bei 110 Ruhm hatten Monster ×25 Leben
+// (Ruhm³-Glied). Jetzt wachsen die Leben gleichmäßig und höchstens auf RUHM_LEBEN_MAX; mehr Ruhm bringt stattdessen ⭐ Elite-Monster
+// mit Eigenschaften, die man kontern muss (ELITE in nacht.js). Ruhm-Lohn wächst weiter mit (RUHM_LOHN).
+const RUHM_LEBEN_JE = 0.04, RUHM_LEBEN_MAX = 99;   // gleichmäßig, ohne Deckel: Ruhm 100 → ×5, 200 → ×9 (früher ×25 schon bei 110); Kampagne höchstens ×RUHM_KAMPAGNE_MAX; Gold wächst langsamer (RUHM_LOHN_MAX)   // gleichmäßig: Ruhm 50 → ×2, 100 → ×3, 250 → ×6 (Deckel ×3 war zu leicht: Bot „mittel“ ohne Niederlage bis Ruhm 292)
+const ruhmFaktor = (r = ruhm()) => Math.min(RUHM_LEBEN_MAX, 1 + RUHM_LEBEN_JE * r);
+const RUHM_KAMPAGNE_MAX = 2;   // Nacht 1–10: Ruhm macht Monster höchstens doppelt so zäh (nacht.js nachtZustand)
+// Endlos: Monster laufen mit Ruhm schneller (+RUHM_TEMPO je Punkt) – Gift und Kettenblitz treffen einen Anteil der Leben,
+// mehr Leben allein machen es dort kaum schwerer; Tempo sorgt dafür, dass es irgendwann eng wird, ohne die Nacht zu verlängern
+const RUHM_TEMPO = 0.002;
+// ⭐ Elite-Anteil: ab ELITE_AB Ruhm wird ein wachsender Teil der Monster Elite (höchstens die Hälfte)
+const ELITE_AB = 25;
+const eliteAnteil = (r = ruhm()) => Math.max(0, Math.min(0.5, (r - ELITE_AB) / 120));
+// 🪙 Tageslohn wächst mit Ruhm und Nacht (Nutzer: „spät 100 Gold für eine perfekte Aufgabe – Türme kosten 200+, Ausbau 400“)
+const TAG_LOHN_RUHM = 0.006, TAG_LOHN_NACHT = 0.02, TAG_LOHN_MAX = 2.5;
+const tagLohnFaktor = () => (ENDLOS ? 1 : Math.min(TAG_LOHN_MAX, (1 + TAG_LOHN_RUHM * ruhm()) * (1 + TAG_LOHN_NACHT * Math.max(0, P.nacht - 1))));
+const ruhmLohn = (r = ruhm()) => Math.min(RUHM_LOHN_MAX, 1 + RUHM_LOHN * r);   // wächst langsamer als die Monster-Leben – sonst wird es nie enger
+const RUHM_LOHN_MAX = 3;
 // nach jeder Nacht (nachtEnde und balance.js); gibt die Änderung zurück
 function ruhmNachNacht(sieg, n, NN = null) {
   const vor = ruhm();
@@ -305,6 +321,9 @@ const ausbauPreis = (art, stufe) => Math.round(TUERME[art].preis * (stufe < 4 ? 
 const VETERAN_MAX = 10, VETERAN_DMG = 0.12, VETERAN_REICH = 0.1;
 const veteranPreis = (art, v) => Math.round(TUERME[art].preis * 14 * 1.35 ** v * turmRabatt());
 // Werte eines Turms aus Basis und den gewählten Ausbauten (vet = Zahl der Veteranen-Abzeichen)
+// 🎯 Einzelschuss-Türme (2026-11-15: spät machten nur Katapult und Kanone Schaden): Meisterstufen ×EINZEL_MEISTER,
+// gegen Große und ⭐ Elite +EINZEL_GROSS (treffe in nacht.js)
+const EINZEL_TUERME = ["pfeil", "eis", "blitz"], EINZEL_MEISTER = 2, EINZEL_GROSS = 1;
 function turmWerteAus(art, wahl, vet = 0) {
   const t = TUERME[art], s = { ...t.basis };
   wahl.forEach((w, i) => {
@@ -313,6 +332,8 @@ function turmWerteAus(art, wahl, vet = 0) {
     for (const [k, v] of Object.entries(m.plus || {})) s[k] = (s[k] || 0) + v;
     Object.assign(s, m.setze || {});
   });
+  // 👑 Einzelschuss-Türme (Pfeil, Eis, Blitz): jede Meisterstufe ×EINZEL_MEISTER Schaden – sie sollen spät mitwachsen wie Katapult und Kanone
+  if (EINZEL_TUERME.includes(art)) s.dmg *= EINZEL_MEISTER ** Math.max(0, wahl.length - 3);
   if (vet) { s.dmg *= 1 + VETERAN_DMG * vet; s.reich += VETERAN_REICH * vet; }
   return s;
 }
@@ -402,7 +423,7 @@ const KAMPAGNE = NAECHTE.length - 1;
 let ENDLOS_LEBEN = 0.1, ENDLOS_QUAD = 0.032;   // 2026-11-13: 0,025 → 0,032 (nach Eis-Stärkung und müdem Drachen war Endlos für den Bot leichter)
 // Monster je Gruppe in Endlosnächten: Start + Zuwachs je Nacht. Spieltest 2026-11-13: nach Nacht 10 (73 Monster) kamen in
 // Nacht 11 nur 27 – jetzt höherer Start, flacherer Zuwachs (spät etwa gleich viele wie vorher; vorher [6, 0.9]).
-let ENDLOS_ANZAHL = [13, 0.7];
+let ENDLOS_ANZAHL = [12, 0.45];   // 2026-11-15: [13, 0,7] → kürzere Nächte (vorher spät 130–285 s Spielzeit)
 const FUCHS_MAX = 12;   // 🦊 höchstens so viele Füchse je Gruppe (Rest kommt als Wölfe)
 // 🛡️ Turmschild (Endlosnächte ab Nacht 12, Nutzerwunsch „mehr Arbeit für den Helden“): Anführer und jedes n-te Monster
 // tragen einen Schild – Türme machen nur diesen Anteil Schaden, Held, Zauber und Talente vollen.

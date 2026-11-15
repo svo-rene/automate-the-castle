@@ -961,6 +961,7 @@ function renderVorschau() {
     ${P.niederlagen ? `<p>😮‍💨 Die Monster sind vom letzten Angriff erschöpft: <b>−${Math.round(schwaechung() * 100)} % Leben</b>.</p>` : ''}
     ${zeilen}
     ${[...new Set(wellen.filter((w) => w.chef || w.g === 'drache').map((w) => w.g))].map((g) => `<p class="hinweis bosshinweis">${bossText(g) || ''}</p>`).join('')}
+    ${eliteText(n) ? `<p class="hinweis bosshinweis">${eliteText(n)}</p>` : ''}
     <p style="margin-top:8px">Einschätzung: <span class="risiko ${r.stufe}">${r.text}</span></p>
     <details><summary>Steckbriefe</summary>${steckbriefe}</details>`;
 }

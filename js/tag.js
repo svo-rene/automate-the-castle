@@ -145,7 +145,7 @@ const RATE_ABZUG = 0.15;
 const rateFaktor = (fehler) => Math.max(TEILLOHN, 1 - RATE_ABZUG * fehler);
 // Zusatz hinter dem Lohn auf jeder Ergebniskarte: halber Lohn beim zweiten Versuch, doppelter durch einen Lehrer-Code
 const lohnHinweis = () => {
-  const t = [zweitAktiv() && '½ – zweiter Versuch', P.doppel === datumHeute() && '×2 – doppelter Lohn heute'].filter(Boolean);
+  const tf = tagLohnFaktor(), t = [tf >= 1.05 && `×${String(Math.round(tf * 10) / 10).replace('.', ',')} – Ruhm und Erfahrung`, zweitAktiv() && '½ – zweiter Versuch', P.doppel === datumHeute() && '×2 – doppelter Lohn heute'].filter(Boolean);
   return t.length ? ` <span class="hinweis">(${t.join(', ')})</span>` : '';
 };
 const VH_TUN = { harvest: 'erntet', water: 'gießt', pull: 'Unkraut rupft', pick: 'einen Ziegel aufhebt', place: 'einen Ziegel legt' };

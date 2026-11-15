@@ -33,6 +33,9 @@ const ZAUBER = {
   eiswelle: { ico: '❄️', name: 'Eiswelle', cd: 8, reich: 10 },
 };
 ZAUBER.schutz = { ico: '🛡️', name: 'Schutzzauber', cd: 14, reich: 99 };
+// 2026-11-15: spät machte nur der Feuerball Schaden – Kettenblitz und Eiswelle treffen zusätzlich einen Anteil der max. Leben
+const ZAUBER_PROZ = { kettenblitz: 0.01, eiswelle: 0.002 };
+const MORGEN_AB = 100;   // 🌅 hat eine Welle alles geschickt und dauert schon so viele Sekunden, ziehen sich die letzten Monster zurück (nachtSchritt)   // 0,025/0,02 waren viel zu stark (Eiswelle trifft ganze Gruppen: spät 42 % des Schadens)
 // ✦ Zauber aus Wundern im Talentnetz (brauchen keinen Zauberplatz)
 ZAUBER.meteor = { ico: '☄️', name: 'Meteor', cd: 25, reich: 99 };
 ZAUBER.riesenglocke = { ico: '🔔', name: 'Riesenglocke', cd: 30, reich: 99 };
@@ -178,7 +181,10 @@ function nachtGold(N, g, x, y) {
 }
 function nachtZustand(n) {
   // Nach Niederlagen sind die Monster dieser Nacht schwächer (schwaechung in data.js)
-  const rf = ruhmFaktor();   // ⭐ Ruhm: stärkere Monster, dafür mehr XP, Kopfgeld und Beute (data.js)
+  // ⭐ Ruhm: stärkere Monster, dafür mehr XP, Kopfgeld und Beute (data.js). In der Kampagne höchstens ×RUHM_KAMPAGNE_MAX
+  // (Nutzer 2026-11-15: „im Endlosspiel darf es eng werden, in der Kampagne nicht“)
+  const rf = n <= KAMPAGNE ? Math.min(RUHM_KAMPAGNE_MAX, ruhmFaktor()) : ruhmFaktor();
+  const ruhmTempo = n <= KAMPAGNE || ENDLOS ? 1 : 1 + RUHM_TEMPO * ruhm();
   const schwach = (n === P.nacht ? 1 - schwaechung() : 1) * schwierig().leben * rf;   // ⚔️ Schwierigkeit (data.js)
   const wellen = wellenFuer(n).map((gruppen) => {
     const spawns = [];
@@ -187,7 +193,7 @@ function nachtZustand(n) {
   });
   const N = { n, t: 0, wt: 0, hp: 0, max: 0, wellen, welle: 0, spawns: wellen[0], si: 0, nr: 0, feinde: [], fx: [], feuer: [], tuerme: [], soldaten: [],
     zauber: [], schaden: {}, besiegt: 0, xp: 0, uhr: {}, ende: null, luecke: 0, halt: false, spaeher: spaeherAktiv(),
-    gold: 0, goldGezahlt: 0, goldJe: nachtGoldJe() * ruhmLohn(), ruhm: ruhmLohn(), ruhmLeben: rf,
+    gold: 0, goldGezahlt: 0, goldJe: nachtGoldJe() * ruhmLohn(), ruhm: ruhmLohn(), ruhmLeben: rf, elite: { anteil: ENDLOS || n <= KAMPAGNE ? 0 : eliteAnteil(), art: ELITE_ARTEN[n % ELITE_ARTEN.length] }, ruhmTempo,
     levelStart: heldLevel().level };   // XP kommen schon in der Pause aufs Konto – die Ergebniskarte vergleicht mit dem Level vom Nachtbeginn
   // 🎯 Erzfeind (Wegknoten): die häufigste Monsterart dieser Nacht
   const zahl = {};
@@ -464,13 +470,14 @@ function zaubere(N, name, ziel) {
     if (a && T.fb_abprall) feuerwurf(N, { erlaubt: imKreisSet, vorher: a, mal: T.fb_abprall, von: a });
     if (a && T.fb_doppelt) feuerwurf(N, { erlaubt: imKreisSet, vorher: a, mal: T.fb_doppelt });
   } else if (name === 'kettenblitz') {
-    const dmg = 7 * (1 + (T.kb_dmg || 0)) * kraft;
+    const dmg = 7 * (1 + (T.kb_dmg || 0)) * kraft;   // + je Ziel ZAUBER_PROZ seiner max. Leben (2026-11-15: wächst spät mit, wie Gift)
     const erstes = imKreis.sort((a, b) => a.rest - b.rest)[0];
     const getroffen = blitzkette(N, erstes, 4 + (T.kb_kette || 0), [], h);
     // 🔱 Gabelblitz: eine zweite Kette ab dem ersten Ziel
     if (T.kb_gabel) blitzkette(N, erstes, 3 + (T.kb_kette || 0), getroffen, erstes);
     for (const e of getroffen) {
-      treffe(N, e, dmg, 'blitz', 'kettenblitz');
+      treffe(N, e, dmg + e.max * ZAUBER_PROZ.kettenblitz, 'blitz', 'kettenblitz');   // Prozent-Teil fest (nicht × Heldenstärke – sonst wächst er schneller als jedes Monster)
+      betaeube(e, 0.3);   // kurzer Schlag – Kettenblitz hat eine klare Aufgabe: kurz aufhalten
       if (T.kb_stun) betaeube(e, T.kb_stun);
       if (T.funkenflug) N.feuer.push({ x: e.x, y: e.y, r: 0.55, t: 1.5, dps: T.funkenflug, q: 'funken' });   // 🎇 Funkenflug
       if (T.schattenblitz) e.fluch = Math.max(e.fluch || 0, T.schattenblitz);   // 🌌 Schattenblitz
@@ -585,7 +592,7 @@ function eiswelle(N, ziel, r) {
   const T = N.T, dmg = 3 * (1 + (T.fn_dmg || 0)) * (1 + (T.alle_dmg || 0));
   const s = { bremse: 3 * (1 + (T.fn_dauer || 0)), bremsFaktor: T.fn_stark ? 0.3 : 0.5 };
   for (const e of nahe(N, ziel.x, ziel.y, r)) {
-    treffe(N, e, dmg, 'eis', 'eiswelle');
+    treffe(N, e, dmg + e.max * ZAUBER_PROZ.eiswelle, 'eis', 'eiswelle');
     bremse(e, s);
     if (T.eisfluch) e.fluch = Math.max(e.fluch || 0, 3);   // 🌫️ Eisiger Fluch
     if (T.fn_frier) { betaeube(e, T.fn_frier, true); e.eis = true; }
@@ -607,6 +614,8 @@ function treffe(N, e, dmg, art, quelle, durch = false, tick = false) {
   if (e.sproedeT > 0) dmg *= 1 + e.sproede;   // 💔 Sprödes Eis (Eisturm)
   if (e.markiert && /^\d+$/.test(quelle)) dmg *= 1 + SPAEHER_DMG;   // 🔭 vom Späher markiert: Türme treffen besser
   if (e.turmschild && /^\d+$/.test(quelle)) dmg *= TURMSCHILD;   // 🛡️ Turmschild: gegen Türme halb, gegen Held und Zauber voll
+  if ((e.gross || e.elite) && /^\d+$/.test(quelle) && EINZEL_TUERME.includes(art)) dmg *= 1 + EINZEL_GROSS;   // 🎯 Einzelschuss gegen Große und Elite
+  if (e.elite === 'panzer' && /^\d+$/.test(quelle) && art !== 'gift') dmg *= 0.6;   // ⭐🛡️ Elite-Panzer: Türme −40 %, Gift, Held und Zauber voll
   if (e.gifS > 0 && e.aetzend) dmg *= 1 + e.aetzend;   // 🎯 Giftturm „Schwachstelle“
   if (e.schildwall > 0 && art === 'pfeil') dmg *= 0.1;   // 👑 Orkhäuptling: Schildwall
   if (e.nebel > 0 && /^\d+$/.test(quelle)) dmg *= 0.25;   // 👑 Geisterfürst als Nebel: Türme treffen kaum
@@ -642,6 +651,7 @@ function treffe(N, e, dmg, art, quelle, durch = false, tick = false) {
   e.hp -= dmg;
   if (wirkt > 0) e.letzte = quelle;
   if (!tick) e.getroffen = 0.12;   // nur fürs Bild: kurz weiß aufblitzen
+  e.trefferT = N.t;   // ⭐💚 zähe Elite heilt nur, wenn sie eine Weile nicht getroffen wurde
   // Schadenszahl nur bei großen Treffern und höchstens alle 0,4 s je Gegner (nur live, nur Bild)
   // Schadenszahlen nur für große Treffer – gemessen am Leben des Monsters (spät waren es sonst Knäuel aus Zahlen), höchstens 6 gleichzeitig
   if (N.live && !tick && dmg >= Math.max(12, e.max * 0.3) && !(e.zahlT > N.t) && N.fx.filter((f) => f.typ === 'text').length < 6) { e.zahlT = N.t + 0.4; N.fx.push({ typ: 'text', x: e.x + 0.2, y: e.y - 0.5, text: `-${Math.round(dmg)}`, farbe: dmg >= 30 ? '#ff8a4a' : '#ffe680', t: 0.8 }); }
@@ -1096,6 +1106,10 @@ function feindNeu(N, art, weg, mehr = 1, chef = false) {
   // 🛡️ Turmschild ab der ersten Endlosnacht (nicht für die kleine Brut der Bosse)
   const k = N.n - KAMPAGNE;
   e.turmschild = k >= 2 && weg.id !== 'brut' && (chef || id % turmschildJedes(k) === 0);
+  // ⭐ Elite (data.js eliteAnteil, steigt mit Ruhm): ein fester Anteil der Monster, je Nacht eine Eigenschaft – nicht Brut, Anführer, Drache
+  if (N.elite?.anteil && weg.id !== 'brut' && !chef && art !== 'drache' && ((id * 37) % 100) / 100 < N.elite.anteil) {
+    e.elite = N.elite.art; e.max *= ELITE_LEBEN; e.hp = e.max;
+  }
   N.feinde.push(e);
   if (chef || art === 'drache') N.fx.push({ typ: 'ansage', t: 3, text: BOSS_ART[art] ? `${chef ? '👑 ' + CHEF[art] : '🐉 Drache'}: ${BOSS_ART[art].kann}!` : `👑 ${CHEF[art]}!` });
   // 👾 Neues Monster (nur live): Karte im Monsterbuch, sobald gerade keine andere offen ist (nachtFrame)
@@ -1125,7 +1139,18 @@ const BOSS_ART = {
 };
 const bossArt = (e) => (e.chef ? (BOSS_ART[e.g] ? e.g : null) : e.g === 'drache' ? 'drache' : null);
 const bossText = (g) => BOSS_ART[g] && `${g === 'drache' ? '🐉 Drache' : `👑 ${CHEF[g]}`}: ${BOSS_ART[g].kann}. Hilft: ${BOSS_ART[g].hilft}.`;
+// ⭐ Elite-Monster (2026-11-15): Ruhm macht Monster nicht mehr endlos zäh, sondern bringt Eigenschaften, die man kontern muss.
+// Je Nacht eine Art (n % 3), ein mit Ruhm wachsender Anteil der Monster (data.js eliteAnteil), ×ELITE_LEBEN Leben.
+const ELITE_ARTEN = ['panzer', 'flink', 'zaeh'], ELITE_LEBEN = 1.5;
+const ELITE_INFO = {
+  panzer: { ico: '🛡️', name: 'gepanzert', kann: 'Türme machen 40 % weniger Schaden', hilft: '🧪 Gift, Held 🧙 und Zauber treffen voll' },
+  flink: { ico: '💨', name: 'flink', kann: 'laufen ein Drittel schneller', hilft: '🧊 Eisturm und Eiswelle bremsen' },
+  zaeh: { ico: '💚', name: 'zäh', kann: 'heilen sich langsam', hilft: '🔥 Feuer oder 🧪 Gift stoppt die Heilung' },
+};
+const eliteText = (n) => { const a = ELITE_INFO[ELITE_ARTEN[n % ELITE_ARTEN.length]], p = n <= KAMPAGNE ? 0 : Math.round(eliteAnteil() * 100); return p ? `⭐ Elite heute (${p} %): ${a.ico} ${a.name} – ${a.kann}. Hilft: ${a.hilft}.` : ''; };
 function bossSchritt(N) {
+  // ⭐💚 zähe Elite heilt sich, außer sie brennt oder ist vergiftet
+  for (const e of N.feinde) if (e.elite === 'zaeh' && e.hp > 0 && e.hp < e.max && !(e.brand > 0) && !(e.gifS > 0) && !(e.feuerT > 0) && N.t - (e.trefferT ?? -9) > 2) e.hp = Math.min(e.max, e.hp + e.max * 0.03 * DT);
   for (const e of N.feinde) {
     const b = bossArt(e);
     if (!b || e.hp <= 0) continue;
@@ -1243,6 +1268,9 @@ function nachtSchritt(N) {
     if (e.bremse > 0) { e.bremse -= DT; v *= e.bremsF; }
     if (e.rasend > 0) { e.rasend -= DT; v *= 2; }   // 🐺 vom Leitwolf angeheult
     if (e.laehm && e.gifS >= 5) v *= 1 - e.laehm;   // 🐌 Giftturm „Klebrig“
+    if (e.elite === "flink") v *= 1.33;   // ⭐💨 flinke Elite
+    v *= N.ruhmTempo || 1;   // Endlos: Ruhm macht Monster schneller (data.js RUHM_TEMPO)
+    if (e.sturm) { e.stun = 0; e.bremse = 0; e.rueck = 0; e.gehalten = null; v = GEGNER[e.g].tempo * 3; }   // 🌅 Morgengrauen: Sturm aufs Tor
     if (e.unten > 0) e.unten -= DT;
     if (e.stun > 0) { e.stun -= DT; v = 0; } else e.eis = false;
     // von einem Soldaten festgehalten?
@@ -1378,6 +1406,20 @@ function nachtSchritt(N) {
   for (const f of N.fx) f.t -= DT;
   N.fx = N.fx.filter((f) => f.t > 0);
   if (N.hp <= 0) { N.hp = 0; N.ende = 'verloren'; return; }
+  // 🌅 Morgengrauen (2026-11-15, gegen endlos lange Nächte): Hat eine Welle alles geschickt und dauert schon MORGEN_AB s,
+  // stürmen die übrigen Monster das Tor – dreifaches Tempo, nicht mehr zu bremsen oder zu betäuben. So endet jede Welle bald,
+  // und wer durchkommt, kostet trotzdem Mauer (einfach verschwinden lassen hätte Niederlagen verhindert).
+  if (N.si >= N.spawns.length && N.feinde.length && N.wt > MORGEN_AB && N.sturmWelle !== N.welle) {
+    N.sturmWelle = N.welle;
+    // Kampagne (Nutzer: „dort soll es nicht hart werden“): die letzten Monster ziehen sich zurück; Endlos: sie stürmen das Tor
+    if (N.n <= KAMPAGNE) {
+      N.fx.push({ typ: 'ansage', t: 2.6, text: `🌅 Morgengrauen – die letzten ${N.feinde.length} Monster ziehen sich zurück.` });
+      N.feinde = [];
+    } else {
+      for (const e of N.feinde) e.sturm = true;
+      N.fx.push({ typ: 'ansage', t: 2.6, text: `🌅 Morgengrauen – die letzten ${N.feinde.length} Monster stürmen das Tor!` });
+    }
+  }
   // Welle ganz besiegt: Wellenbonus, dann Verschnaufpause (live) – oder die Nacht ist gehalten
   if (N.si >= N.spawns.length && !N.feinde.length) {
     if (N.welle >= N.wellen.length - 1) { N.ende = 'gehalten'; return; }

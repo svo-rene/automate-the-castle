@@ -227,7 +227,6 @@ function menuUmschalten() {
     ['❓ Hilfe', hilfe],
     ['📖 Die Geschichte', () => storyKarte()],
     ['👾 Monsterbuch', monsterBuch],
-    [`⚔️ Schwierigkeit: ${schwierig().ico} ${schwierig().name}`, schwierigWahl],
     [`🎨 Farben: ${PROFIL.farben === 'cvd' ? 'Blau/Orange (Rot-Grün-Schwäche)' : 'normal'}`, () => {
       PROFIL.farben = PROFIL.farben === 'cvd' ? null : 'cvd'; profilSpeichern(); farbenSetzen();
       if (P.phase === 'morgen') renderKarte();
@@ -330,7 +329,7 @@ const ruhmKarte = () => abzeichenKarte('kampf');
 // misslungenen Auftrag sofort noch einmal versuchen – dann gibt es nur ZWEIT_LOHN des Lohns (⭐ „auf Anhieb“ ist ohnehin weg)
 const ZWEIT_LOHN = 0.5;
 const zweitAktiv = () => !!(H && P.zweit?.tag === P.tag && P.zweit.id === H.id);
-const lohnFaktor = () => (P.doppel === datumHeute() ? 2 : 1) * (zweitAktiv() ? ZWEIT_LOHN : 1);
+const lohnFaktor = () => (P.doppel === datumHeute() ? 2 : 1) * (zweitAktiv() ? ZWEIT_LOHN : 1) * tagLohnFaktor();   // tagLohnFaktor: wächst mit Ruhm und Nacht (data.js)
 function zweitKnopf(ok) {
   if (ok || !H || H.pruefung || ENDLOS || P.zweit?.tag === P.tag) return [];
   return [{ label: '🔁 Nochmal (½ 🪙)', fn: () => { P.zweit = { tag: P.tag, id: H.id }; speichern(); tagStart(H.id); toast('🔁 Zweiter Versuch – gelingt er, gibt es den halben Lohn.'); } }];

@@ -245,7 +245,7 @@ function heftHtml() {
       <p>🧙 Held: Level ${L} · ${Math.max(0, P.talente.length - 1)} Talente gelernt · ${sockelZahl()} Zauberplätze</p>
       <p>🪄 Zauber: ${steinBesitz().map((t) => `${STEINE[t].ico} ${STEINE[t].name}`).join(', ') || 'noch keine'}</p>
       <p>🗼 Türme: ${tuerme.length ? tuerme.join(', ') : 'noch keine'}</p>
-      <p>🌙 Nacht ${P.nacht}${P.rekord ? ` · Rekord: Nacht ${P.rekord}` : ''} · Tag ${P.tag} · ${schwierig().ico} ${schwierig().name}</p>
+      <p>🌙 Nacht ${P.nacht}${P.rekord ? ` · Rekord: Nacht ${P.rekord}` : ''} · Tag ${P.tag}</p>
       <p>👾 Monsterbuch: ${(P.monster || []).length} von ${Object.keys(GEGNER).length} Monstern gesehen</p>
       ${abzLeiterDa('stern') ? `<h3>⭐ Programmier-Abzeichen</h3><p>${sternePunkte()} Sterne aus den Aufgaben</p>${abzeichenHtml('stern')}` : ''}
       <h3>🏆 Kampf-Abzeichen</h3>
@@ -301,7 +301,7 @@ const ERKL = [
   { key: 'kombo', titel: '🔗 Kombos', text: 'Zwei Zauber verschiedener Richtungen im Zauberplatz wirken zusammen als Kombo. Nachlesen: ✨ Talente → 📖 Kombo-Buch.' },
   { key: 'stuetz', titel: '➕ Verstärker', text: 'Dieser Zauber hat jetzt einen ➕ Platz. Setz einen Verstärker ein: ✨ Talente → 🪄 Zauber → Zauber antippen.' },
   { key: 'stuetzkauf', titel: '🛒 Verstärker-Plätze kaufen', text: 'Mehr ➕ Plätze kaufen: ✨ Talente → 🪄 Zauber → Zauber antippen.' },
-  { key: 'ruhm', titel: '🏆 Ruhm und ⭐ Sterne', text: 'Jede gehaltene Nacht bringt 🏆 Ruhm. Mehr Ruhm = stärkere Monster, aber mehr Beute. Abzeichen: oben 🏆 antippen.' },
+  { key: 'ruhm', titel: '🏆 Ruhm und ⭐ Sterne', text: 'Jede gehaltene Nacht bringt 🏆 Ruhm: Monster werden zäher, nach Nacht 10 kommen ⭐ Elite-Monster dazu – dafür gibt es mehr Gold. Was die Elite heute kann, steht im Späherbericht.' },
   { key: 'turmschild', titel: '🛡️ Monster mit Turmschild', text: 'Monster mit blauem Ring (🛡️) nehmen von Türmen weniger Schaden. Dein Held 🧙 und seine Zauber treffen voll.' },
   { key: 'flieger', titel: '🦇 Flieger', text: '🦇 Flieger fliegen quer übers Feld zum Tor. Stell einen 🏹 Pfeilturm nah ans Tor – Katapulte treffen sie nicht.' },
   { key: 'sternenring', titel: '🌌 Sternenring und 💎 Juwelen', text: '🌌 Sternenring: sehr starke Talente mit Nachteil, ganz außen im Netz. 💎 Juwelen setzt du in eine gelernte Fassung.' },

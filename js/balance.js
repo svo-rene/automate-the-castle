@@ -34,7 +34,15 @@ let BOT_TURM_MEHR = 1.5;   // ab dem 4. Turm: so viel teurer kommt dem Bot jeder
 //   mittel   Nacht 42 → 43, verloren 8 → 7,   Drache 4/13 → 1/10
 //   schwach  Nacht 39 → 39, verloren 12 → 11, Drache 6/14 → 2/10
 // Nachtdauer (mittel, Spielzeit): Nacht 1 50 s, Nacht 5–15 meist 80–130 s, spät bis 170 s.
-let BOT_AUSG = {};
+// 📈 Skalierung neu (2026-11-15, Nutzer: „spät eine Wand, nur Katapult/Kanone/Feuerball machen Schaden, Nächte zu lang“):
+// Ruhm-Leben gleichmäßig (×2 in der Kampagne, Endlos ohne Deckel, kein Ruhm³ mehr), ⭐ Elite nach Nacht 10, Endlos-Tempo mit Ruhm,
+// Einzelschuss-Türme Meister ×2 und doppelt gegen Große/Elite, Kettenblitz/Eiswelle + fester Anteil der Leben, Lohn mit Ruhm/Nacht,
+// 🌅 Morgengrauen nach 100 s je Welle, weniger Monster im Endlos. Bot 50 Tage, Burg 7, vorher → nachher:
+//            Nacht T50  verloren   Dauer früh/mitte/spät (max)        Schaden spät (größte Anteile)
+//   gut      45 → 50    5 → 0      78/145/318 s (900) → 68/103/124 (173)  Katapult 25 %, Funkenregen 16 %, Feuerball 15 % → Pfeil 18, Funkenregen 15, Katapult 14, Kettenblitz 12, Gift 8, Eiswelle 8
+//   mittel   44 → 47    6 → 3      82/129/192 s (757) → 75/106/142 (221)  Katapult 26, Feuerball 16 → Katapult 20, Funkenregen 13, Pfeil 11, Feuerball 9, Kettenblitz 8
+//   schwach  40 → 42   10 → 9      74/120/126 s (177) → 78/99/109 (152)   Feuerball 21, Katapult 18 → Feuerball 20, Katapult 15, Gift 11, Kanone 11
+let BOT_AUSG = {}, BOT_SCHADEN = {};
 function botKaufen() {
   for (let runde = 0; runde < 30; runde++) {
     const moeglich = [];
@@ -115,7 +123,7 @@ function botLauf(typ = 'gut', tage = 40) {
   const echt = P, zeilen = [], endlosVorher = ENDLOS;
   ENDLOS = typ === 'endlos';
   P = ENDLOS ? endlosStand() : neuerStand();
-  BOT_AUSG = {};
+  BOT_AUSG = {}; BOT_SCHADEN = {};
   let versuch = 0;
   for (let tag = 1; tag <= tage; tag++) {
     // Morgen: Roboter (gut = Code klappt immer und ist sparsam, mittel = klappt, schwach = jeder zweite Morgen)
@@ -131,11 +139,11 @@ function botLauf(typ = 'gut', tage = 40) {
     if (ENDLOS) { /* kein Tag */ } else if (h) {
       const klappt = typ !== 'schwach' || versuch++ % 2 === 1;
       if (klappt) {
-        lohn = h.lohn * (typ === 'gut' ? 1 + 2 * STERN_BONUS : 1);
+        lohn = h.lohn * (typ === 'gut' ? 1 + 2 * STERN_BONUS : 1) * tagLohnFaktor();
         // Sterne (zählen auch für den ⭐ Ruhm): gut holt beide, mittel einen, schwach keinen
         P.hoefe[h.id] = { fertig: true, kurz: typ !== 'schwach', sparsam: typ === 'gut', versuche: 1, tipps: 0, heute: 0 };
-      } else lohn = h.lohn * TEILLOHN * 0.5;
-    } else lohn = burgHoefe().at(-1).lohn * NACHARBEIT;   // alles gelöst: Nacharbeit
+      } else lohn = h.lohn * TEILLOHN * 0.5 * tagLohnFaktor();
+    } else lohn = burgHoefe().at(-1).lohn * NACHARBEIT * tagLohnFaktor();   // alles gelöst: Nacharbeit
     P.gold += Math.round(lohn);
     // Abend
     botKaufen();
@@ -149,6 +157,9 @@ function botLauf(typ = 'gut', tage = 40) {
       nachtAufstellen(N, false);
     }), sieg = N.ende === 'gehalten';
     staerkeMerken(N);
+    // fürs Messen: wer macht wie viel Schaden (Turmart bzw. Zauber), getrennt nach früh (1–10), mittel (11–25), spät (26+)
+    const abschnitt = n <= 10 ? "frueh" : n <= 25 ? "mitte" : "spaet", sb = (BOT_SCHADEN[abschnitt] ||= {});
+    for (const [q, d] of Object.entries(N.schaden || {})) { const art = N.turmArt?.[q] || P.tuerme[q.split("~")[0]]?.art; const k = art || q; sb[k] = (sb[k] || 0) + d; }
     P.xp += Math.round(sieg ? N.xp + welleXp(n) * (N.ruhm || 1) : N.xp / 2);
     const nachtgold = Math.max(0, Math.round(N.gold + (sieg ? welleXp(n) * N.goldJe : 0)) - N.goldGezahlt) + N.goldGezahlt;
     P.gold += nachtgold - N.goldGezahlt;
@@ -161,7 +172,7 @@ function botLauf(typ = 'gut', tage = 40) {
     zeilen.push({ tag, dauer: Math.round(N.t), hof: h ? h.id : '–', lohn: Math.round(lohn), robo, nachtgold, roboter: Object.keys(P.roboter).length, nacht: n, ergebnis: sieg ? `✓ ${Math.ceil(N.hp)}/${N.max}` : '✗', xp: P.xp,
       gold: P.gold, ruhm: ruhm(), sterne: ENDLOS ? 0 : sternePunkte(), schaetze: Object.keys(SCHAETZE).filter(schatzHat).length, tuerme: Object.values(P.tuerme).map((t) => TUERME[t.art].ico + turmStufe(t)).join(''), level: heldLevel().level });
   }
-  window.BOT_LETZT = P; window.BOT_AUSG = BOT_AUSG;   // zum Nachmessen (z. B. simNacht mit dem Stand des Bots)
+  window.BOT_LETZT = P; window.BOT_AUSG = BOT_AUSG; window.BOT_SCHADEN = BOT_SCHADEN;   // zum Nachmessen (z. B. simNacht mit dem Stand des Bots)
   P = echt; ENDLOS = endlosVorher;
   return zeilen;
 }
