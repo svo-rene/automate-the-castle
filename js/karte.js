@@ -747,7 +747,7 @@ const WERT_NAME = {
   bremse: ['🐌 Bremst für', ' s'], bremsFaktor: ['🐌 Tempo gebremst', '×'], kette: ['⚡ Springt auf', ' Gegner'], stun: ['💫 Betäubt für', ' s'],
   feuer: ['🔥 Feuer', ' pro s'], eisfeld: ['❄️ Eisfeld', ''], frierJedes: ['🧊 Friert jeden', '. Schuss'], durchschlag: ['➡️ Durchschlag', ''], ersterDoppelt: ['⚡ Überladung', ''],
   rueckstoss: ['🌬️ Pustet zurück', ' Felder'], stoesse: ['🪢 Je Monster höchstens', '-mal'],
-  gift: ['🧪 Gift je Schicht', ' pro s'], giftProz: ['🧪 + Leben je Schicht', ' % pro s'], giftMax: ['🧪 Schichten höchstens', ''],
+  gift: ['🧪 Gift je Schicht', ' pro s'], giftProz: ['🧪 Extra je Schicht', ' % der Leben pro s'], giftMax: ['🧪 Schichten höchstens', ''],
 };
 // 👑 Fähigkeiten der Meisterstufen (Stufe 5 und 6) als Zeile
 function turmFaehigZeile(tw) {

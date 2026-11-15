@@ -241,19 +241,19 @@ const TUERME = {
   // Kommt zwei Nächte vor dem ersten Drachen (Nacht 10). Werte: gift = Schaden je Schicht und Sekunde (nacht.js giftSchritt)
   gift: {
     ico: '🧪', name: 'Giftturm', art: 'gift', ab: 8, preis: 60,
-    text: 'Vergiftet ein Ziel. Gift stapelt sich (bis 5 Schichten), ignoriert Rüstung und frisst je Schicht einen Teil der Leben – stark gegen Bosse, schwach gegen Schwärme.',
+    text: 'Vergiftet ein Ziel. Gift stapelt sich (bis 5 Schichten), ignoriert Rüstung und nimmt je Schicht einen kleinen Teil der Leben weg – stark gegen Bosse, schwach gegen Schwärme.',
     basis: { dmg: 1, reich: 3.8, takt: 0.9, gift: 1.6, giftProz: 0.003, giftMax: 5, giftDauer: 4 },   // giftProz: je Schicht 0,3 % der max. Leben pro s – wächst mit dem Boss mit, bei Ratten fast nichts
     wege: [
-      [{ ico: '☠️', name: 'Starkes Gift', text: 'Jede Schicht macht 50 % mehr Schaden.', mod: { mal: { gift: 1.5, giftProz: 1.5 } } },
+      [{ ico: '💪', name: 'Starkes Gift', text: 'Jede Schicht macht 50 % mehr Schaden.', mod: { mal: { gift: 1.5, giftProz: 1.5 } } },
         { ico: '💨', name: 'Schnelle Pfeile', text: 'Schießt ein Drittel schneller.', mod: { mal: { takt: 0.67 } } }],
-      [{ ico: '🧫', name: 'Tiefe Wunden', text: 'Bis zu 8 Schichten statt 5.', mod: { plus: { giftMax: 3 } } },
+      [{ ico: '🧫', name: 'Mehr Schichten', text: 'Bis zu 8 Schichten statt 5.', mod: { plus: { giftMax: 3 } } },
         { ico: '👁️', name: 'Weitblick', text: 'Reichweite +1.', mod: { plus: { reich: 1 } } }],
-      [{ ico: '🎯', name: 'Bossgift', text: 'Zielt auf den Gegner mit den meisten Leben, jeder Treffer legt 2 Schichten.', mod: { setze: { bossgift: true } } },
-        { ico: '🦠', name: 'Seuche', text: 'Stirbt ein Vergifteter, springen seine Schichten auf den nächsten Gegner.', mod: { setze: { seuche: true } } }],
-      [{ ico: '🫠', name: 'Ätzend', text: 'Vergiftete nehmen 20 % mehr Schaden – von allem.', mod: { setze: { aetzend: 0.2 } } },
-        { ico: '🐌', name: 'Lähmgift', text: 'Gegner mit 5 oder mehr Schichten laufen 30 % langsamer.', mod: { setze: { laehm: 0.3 } } }],
+      [{ ico: '🎯', name: 'Auf die Großen', text: 'Zielt auf den Gegner mit den meisten Leben, jeder Treffer legt 2 Schichten.', mod: { setze: { bossgift: true } } },
+        { ico: '🔀', name: 'Weitergeben', text: 'Wird ein vergiftetes Monster besiegt, springen seine Schichten auf das nächste.', mod: { setze: { seuche: true } } }],
+      [{ ico: '🎯', name: 'Schwachstelle', text: 'Vergiftete Monster nehmen 20 % mehr Schaden – von allem.', mod: { setze: { aetzend: 0.2 } } },
+        { ico: '🐌', name: 'Klebrig', text: 'Monster mit 5 oder mehr Schichten laufen 30 % langsamer.', mod: { setze: { laehm: 0.3 } } }],
       [{ ico: '☁️', name: 'Giftwolke', text: 'Jeder Treffer legt auch allen Gegnern im Umkreis von 1 Feld eine Schicht.', mod: { setze: { giftwolke: 1 } } },
-        { ico: '💀', name: 'Todesgift', text: 'Ab 8 Schichten macht das Gift 50 % mehr Schaden.', mod: { setze: { todesgift: true } } }],
+        { ico: '⭐', name: 'Extra stark', text: 'Ab 8 Schichten wirkt das Gift 50 % stärker.', mod: { setze: { todesgift: true } } }],
     ],
   },
   blitz: {

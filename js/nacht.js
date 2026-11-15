@@ -607,7 +607,7 @@ function treffe(N, e, dmg, art, quelle, durch = false, tick = false) {
   if (e.sproedeT > 0) dmg *= 1 + e.sproede;   // 💔 Sprödes Eis (Eisturm)
   if (e.markiert && /^\d+$/.test(quelle)) dmg *= 1 + SPAEHER_DMG;   // 🔭 vom Späher markiert: Türme treffen besser
   if (e.turmschild && /^\d+$/.test(quelle)) dmg *= TURMSCHILD;   // 🛡️ Turmschild: gegen Türme halb, gegen Held und Zauber voll
-  if (e.gifS > 0 && e.aetzend) dmg *= 1 + e.aetzend;   // 🫠 Giftturm „Ätzend“
+  if (e.gifS > 0 && e.aetzend) dmg *= 1 + e.aetzend;   // 🎯 Giftturm „Schwachstelle“
   if (e.schildwall > 0 && art === 'pfeil') dmg *= 0.1;   // 👑 Orkhäuptling: Schildwall
   if (e.nebel > 0 && /^\d+$/.test(quelle)) dmg *= 0.25;   // 👑 Geisterfürst als Nebel: Türme treffen kaum
   if (art === 'feuer') e.feuerT = 2;   // 👑 Trollkönig: Feuer stoppt die Heilung
@@ -1121,7 +1121,7 @@ const BOSS_ART = {
   ork: { kann: 'hebt alle 9 s den Schildwall: 4 s lang prallen Pfeile ab', hilft: '💣 Kanone, 🌩️ Blitz und Zauber treffen trotzdem' },
   geist: { kann: 'wird alle 8 s für 3 s zu Nebel – dann treffen Türme kaum', hilft: 'dein Held 🧙 und Zauber treffen immer' },
   troll: { kann: 'heilt sich laufend, außer er brennt', hilft: '🔥 Feuer – 💣 Kanone oder Feuerball stoppt die Heilung' },
-  drache: { kann: 'holt alle 10 s Luft und setzt dann den nächsten Turm 5 s außer Gefecht', hilft: '🧪 Giftturm frisst ihn auf; Türme verteilen; betäuben, während er Luft holt, bricht den Feueratem ab' },
+  drache: { kann: 'holt alle 10 s Luft und setzt dann den nächsten Turm 5 s außer Gefecht', hilft: '🧪 Giftturm schwächt ihn Stück für Stück; Türme verteilen; betäuben, während er Luft holt, bricht den Feueratem ab' },
 };
 const bossArt = (e) => (e.chef ? (BOSS_ART[e.g] ? e.g : null) : e.g === 'drache' ? 'drache' : null);
 const bossText = (g) => BOSS_ART[g] && `${g === 'drache' ? '🐉 Drache' : `👑 ${CHEF[g]}`}: ${BOSS_ART[g].kann}. Hilft: ${BOSS_ART[g].hilft}.`;
@@ -1242,7 +1242,7 @@ function nachtSchritt(N) {
     if (e.g === 'drache') v *= DRACHE_MUEDE + (1 - DRACHE_MUEDE) * Math.max(0, e.hp / e.max);
     if (e.bremse > 0) { e.bremse -= DT; v *= e.bremsF; }
     if (e.rasend > 0) { e.rasend -= DT; v *= 2; }   // 🐺 vom Leitwolf angeheult
-    if (e.laehm && e.gifS >= 5) v *= 1 - e.laehm;   // 🐌 Lähmgift
+    if (e.laehm && e.gifS >= 5) v *= 1 - e.laehm;   // 🐌 Giftturm „Klebrig“
     if (e.unten > 0) e.unten -= DT;
     if (e.stun > 0) { e.stun -= DT; v = 0; } else e.eis = false;
     // von einem Soldaten festgehalten?
@@ -1340,7 +1340,7 @@ function nachtSchritt(N) {
     if (!tote.length) break;
     for (const e of tote) {
       // 🦠 Seuche: die Giftschichten springen auf den nächsten Gegner
-      if (e.seuche && e.gifS > 0) { const o = naechste(N, e, 2.5, 1)[0]; if (o) { vergifte(o, e.seuche, e.gifQ, e.gifS); N.fx.push({ typ: "text", x: o.x, y: o.y - 0.6, text: "🦠", farbe: "#8cff5a", t: 0.8 }); } }
+      if (e.seuche && e.gifS > 0) { const o = naechste(N, e, 2.5, 1)[0]; if (o) { vergifte(o, e.seuche, e.gifQ, e.gifS); N.fx.push({ typ: "text", x: o.x, y: o.y - 0.6, text: "🧪", farbe: "#8cff5a", t: 0.8 }); } }
       e.gezaehlt = true;
       N.besiegt++;
       if (N.T.rausch) N.rausch = 2;
