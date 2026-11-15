@@ -1402,7 +1402,7 @@ function nachtInfo() {
   SEL = null; KAUF = null;
   const frei = punkteFrei();
   $('#nachtBau').innerHTML = `<div class="pausebrett">${N.zwischen
-    ? `<b>✅ Welle ${N.welle + 1} gehalten!</b><span class="hinweis">${frei > 0 ? `✨ ${frei} Talentpunkt${frei > 1 ? 'e' : ''} frei – jetzt verteilen! ` : ''}Bauen, reparieren, dann kommt Welle ${N.welle + 2} mit dem 👑 Anführer.</span>`
+    ? `<b>✅ Welle ${N.welle + 1} gehalten!</b><span class="hinweis">${frei > 0 ? `Oben ✨ Talente: ${frei} Punkt${frei > 1 ? "e" : ""} frei. ` : ""}Bauen geht jetzt auch. Weiter mit „▶ Welle ${N.welle + 2}“ oben.</span>`
     : '<b>⏸ Pause</b><span class="hinweis">Turm antippen = ausbauen.</span>'}</div>
     <div class="baupanel" id="baupanel" style="margin-top:8px"></div>`;
   renderBau();

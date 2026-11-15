@@ -26,7 +26,7 @@ function karteStart() {
     { ziel: () => document.querySelector('.weiterhier')?.closest('.khof') || document.querySelector('.khof.offen'), text: `${ortWort(burgKapitel()[0]).hof} antippen`, fertig: () => P.phase !== 'morgen' },
   ], () => P.phase === 'morgen');
   if (roboBerichtZeigen()) return;
-  if (roboterBekannt() && erklaere('roboter', ' Ab jetzt kannst du sie kaufen und auf gelöste Höfe stellen.')) return;
+  if (roboterBekannt() && erklaere('roboter')) return;
   erklaerungenPruefen();
 }
 
@@ -500,7 +500,7 @@ function abendStart() {
   // Talente erst, wenn der Held XP hat (Abzeichen: freie Talent- und Spezialisierungspunkte)
   const frei = punkteFrei() + Math.max(0, spezPunkte());
   neben(P.xp ? [{ label: `✨<span class="lbl"> Talente</span>${frei > 0 ? ` <span class="badge">${frei}</span>` : ''}`, title: 'Talente und Zauber des Helden', fn: () => talentBlatt(), cls: frei > 0 ? 'gruen' : 'leise' }] : []);
-  $('#scr-karte').innerHTML = `<div class="kopf"><h1>🌇 Abend</h1><span class="sub">Stelle Türme neben den Weg. Danach kommt die Nacht.</span></div>
+  $('#scr-karte').innerHTML = `<div class="kopf"><h1>🌇 Abend</h1><span class="sub">Türme neben den Weg stellen, dann oben „🌙 Nacht starten“.</span></div>
     <div class="abend-grid">
       <div class="feldreihe"><div class="nachtbox"><canvas id="abendCanvas"></canvas><div class="bauok"></div></div><div class="bauleiste"></div></div>
       <div><div class="baupanel" id="baupanel"></div><div class="vorschau" id="vorschau" style="margin-top:10px"></div></div>
