@@ -782,6 +782,20 @@ textarea.codefeld { font-size: .8em; word-break: break-all; resize: none; }
 .hmerke { background: #fff6d6; border-left: 5px solid #e0a920; border-radius: 6px; padding: 8px 12px; margin: 8px 0 12px; }
 .hmerke > b, .hbeispiele > b { display: block; color: #8a5a00; font-size: 13px; text-transform: uppercase; letter-spacing: .5px; }
 .hbeispiele > b { color: #23306a; margin-bottom: 4px; }
+/* Merke mit Bild (Klassen-/Objektkarte, Kap. 141): eigene Karte bleibt beim Druck zusammen */
+.hmbild { margin: 8px 0 4px; break-inside: avoid; }
+.hmkarten, .hmfolge { display: flex; flex-wrap: wrap; gap: 10px 22px; align-items: flex-start; margin-bottom: 8px; }
+.hmcap { font-weight: 700; color: #8a5a00; font-size: 13px; margin: 2px 0 4px; }
+.hmzeile { display: flex; align-items: stretch; gap: 6px; }
+.hmteile { display: flex; flex-direction: column; justify-content: space-around; font-size: 12px; color: #6a4a10; white-space: nowrap; }
+.hmfolge { align-items: center; gap: 6px 8px; }
+.hmpfeil { font: 12px 'JetBrains Mono', monospace; color: #1a2040; text-align: center; line-height: 1.3; }
+.hfragen { margin: 4px 0; padding-left: 20px; font-size: 13px; }
+.hfragen li { margin: 2px 0; }
+.hfragen b { color: #1d6a2a; white-space: nowrap; }
+.hmpfeil span { font-size: 22px; line-height: 1; }
+.hmneu { background: #ffe27a; border-radius: 3px; padding: 0 2px; }
+.hmbild .umlklasse, .hmbild .objkarte { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
 .hbsp { border: 1px dashed #b8c0d0; border-radius: 8px; padding: 8px 10px; margin: 6px 0; background: #fff; }
 .hzwei { display: grid; grid-template-columns: minmax(0, 200px) 1fr; gap: 12px; align-items: start; }
 .hbild { width: 100%; border-radius: 6px; }

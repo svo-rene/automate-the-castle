@@ -158,7 +158,7 @@ HOEFE.push(
   S1_F({ id: 'lb2', kapitel: 141, ico: '•', titel: 'Die Punktnotation', lohn: 40,
     ansicht: 'tabelle', titelAnsicht: 'Objektkarte vorher', tabelle: () => ({ html: S1_karten(S1_OBJEKT, S1_KLASSE) }),
     ziel: 'Gib dem Objekt Aufträge mit der Punktnotation – und sag voraus, was sich ändert.',
-    merke: { titel: '• Punktnotation', text: 'Mit der Punktnotation führst du eine Methode an einem Objekt aus: erst der Objektname, dann ein Punkt, dann die Methode. In deinen Blöcken steht die Methode allein – gemeint ist immer dein Bauer.', code: 'objektname.methode()\ndach.fuellfarbeSetzen(rot)' },
+    merke: { titel: '• Punktnotation', text: 'Mit der Punktnotation führst du eine Methode an einem Objekt aus: erst der Objektname, dann ein Punkt, dann die Methode. In deinen Blöcken steht die Methode allein – gemeint ist immer dein Bauer.', code: 'objektname.methode()\nbauer.turn_left()' },
     fragen: [W('Der Bauer soll sich nach links drehen. Welche Zeile ist richtig?', ['bauer.turn_left()', 'turn_left.bauer()', 'BAUER turn_left', 'bauer(turn_left)'], 0),
       { art: 'zahl', text: 'Der Bauer bekommt dreimal bauer.forward(). Welchen Wert hat x danach? (Am Anfang ist x = 0, Blick nach Osten.)', soll: () => 3 },
       W('Danach kommt bauer.turn_right(). Welches Attribut ändert sich?', ['x', 'korb', 'richtung', 'gar keins'], 2),
@@ -169,6 +169,7 @@ HOEFE.push(
     ansicht: 'tabelle', titelAnsicht: 'Zwei Objekte der Klasse BAUER',
     tabelle: () => ({ html: S1_karten(objKarte('bauer1', 'BAUER', { x: 0, y: 0, richtung: '"Osten"', korb: 0 }), objKarte('bauer2', 'BAUER', { x: 3, y: 1, richtung: '"Westen"', korb: 4 }), S1_code('bauer2.forward()\nbauer2.forward()\nbauer1.harvest()')) }),
     ziel: 'Nach einem Bauplan kann es viele Objekte geben. Lies die Karten und den Code.',
+    heftBild: () => `<div class="hmfolge">${objKarte('bauer1', 'BAUER', { x: 0, y: 0, richtung: '"Osten"', korb: 0 })}${objKarte('bauer2', 'BAUER', { x: 3, y: 1, richtung: '"Westen"', korb: 4 })}</div><pre class="hcode">bauer2.forward()\nbauer2.forward()\nbauer1.harvest()</pre>`,
     fragen: [W('bauer1 und bauer2 sind …', ['zwei Klassen', 'zwei Objekte', 'zwei Attribute', 'zwei Methoden'], 1),
       W('Was stimmt?', ['Nur bauer1 hat das Attribut korb.', 'Gleiche Attribute, eigene Werte.', 'Immer die gleichen Attributwerte.', 'Objekte haben gar keine Attribute.'], 1),
       { art: 'zahl', text: 'Der Blick von bauer2 geht nach Westen. Dann kommt zweimal bauer2.forward(). Nach Westen wird x kleiner. Welchen Wert hat x von bauer2 danach?', soll: () => 1 },
@@ -289,6 +290,15 @@ HOEFE.push(
 
 // --- 📓 Heft ---
 HEFT_EXTRA[140] = { titel: 'Was ist ein Algorithmus?', text: ['Ein Algorithmus ist eine Handlungsvorschrift, die eine Aufgabe löst.', 'Er ist eindeutig (jeder Schritt ist klar), ausführbar (jeder Schritt ist machbar) und endlich (er hört irgendwann auf).', '„Geh ein paar Schritte“ ist nicht eindeutig, „Geh immer weiter“ ist nicht endlich.'] };
-HEFT_EXTRA[141] = { titel: 'Klasse, Objekt, Attribut, Methode', text: ['Eine Klasse ist der Bauplan (BAUER), ein Objekt ein Exemplar danach (bauer).', 'Attribute wie richtung haben Attributwerte wie "Osten"; Methoden wie forward() verändern sie.', 'Punktnotation: objekt.methode() – ein Zustandsdiagramm zeigt, wie ein Objekt seinen Zustand wechselt.'], code: 'bauer.forward()\nbauer.turn_right()' };
+// Heft: Klassen- und Objektkarte mit Beschriftung, darunter dasselbe Objekt vor und nach zwei Methoden (Nutzerwunsch 2026-11-15)
+const S1_heftKarte = (titel, karte, teile) => `<div class="hmkarte"><div class="hmcap">${titel}</div><div class="hmzeile">${karte}<div class="hmteile">${teile.map((t) => `<div>${t}</div>`).join('')}</div></div></div>`;
+const S1_heftObjekt = (werte, mark) => objKarte('bauer', 'BAUER', Object.fromEntries(Object.entries(werte).map(([k, v]) => [k, k === mark ? `<b class="hmneu">${v}</b>` : v])));
+HEFT_EXTRA[141] = { titel: 'Klassenkarte und Objektkarte',
+  text: ['Die Klassenkarte ist der Bauplan: oben der Klassenname (BAUER), in der Mitte die Attribute, unten die Methoden.',
+    'Die Objektkarte zeigt ein Exemplar nach diesem Plan: oben unterstrichen „bauer : BAUER“, darunter jedes Attribut mit seinem Attributwert.',
+    'Mit der Punktnotation bauer.methode() führt das Objekt eine Methode aus – sie ändert seine Attributwerte.'],
+  bild: () => `<div class="hmkarten">${S1_heftKarte('Klassenkarte', S1_KLASSE, ['← Klassenname', '← Attribute', '← Methoden'])}${S1_heftKarte('Objektkarte', S1_OBJEKT, ['← Objektname : Klasse', '← Attributwerte'])}</div>
+    <div class="hmcap">Beispiel: Methoden ändern Attributwerte</div>
+    <div class="hmfolge">${S1_heftObjekt({ x: 0, y: 0, richtung: '"Osten"', korb: 0 })}<div class="hmpfeil">bauer.forward()<br><span>→</span></div>${S1_heftObjekt({ x: 1, y: 0, richtung: '"Osten"', korb: 0 }, 'x')}<div class="hmpfeil">bauer.turn_right()<br><span>→</span></div>${S1_heftObjekt({ x: 1, y: 0, richtung: '"Süden"', korb: 0 }, 'richtung')}</div>` };
 HEFT_EXTRA[142] = { titel: 'Belegungstabelle', text: ['In einer Belegungstabelle steht nach jedem Schritt der Wert jeder Variable.', 'Jede Spalte ist eine Variable, jede Zeile ein Schritt.', 'So findest du Fehler und Endlosschleifen.'], code: 'zahl = 1\nwhile zahl < 20:\n    zahl = zahl * 2\n# zahl: 1, 2, 4, 8, 16, 32' };
 HEFT_EXTRA[144] = { titel: 'Tabellen planen', text: ['Spalte = Attribut, Zeile = Datensatz, Eintrag = Datenwert. Der Primärschlüssel ist eindeutig; Datentypen z. B. integer, varchar, boolean.', 'Im ER-Modell: Entität = Rechteck, Attribut = Ellipse, Beziehung = Raute; Kardinalitäten 1:1, 1:n, n:m.', 'Ein Fremdschlüssel zeigt auf den Primärschlüssel einer anderen Tabelle. n:m braucht eine eigene Tabelle.'] };

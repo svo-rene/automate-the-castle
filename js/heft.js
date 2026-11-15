@@ -175,9 +175,20 @@ function heftBeispiel(h) {
     return `<div class="hbsp">${kopf}<pre class="hcode">${esc(q)}</pre>${erg}</div>`;
   }
   if (h.art === 'ki') return `<div class="hbsp">${kopf}${heftKi(h)}</div>`;
+  // Quiz-Hof (Dorfschule, Plansaal …): statt leerem Codekasten das Bild der Aufgabe (heftBild) und die Fragen mit Lösung
+  if (h.art === 'sort' && h.sortArt === 'fragen') return `<div class="hbsp">${kopf}${h.heftBild ? `<div class="hmbild">${h.heftBild()}</div>` : ''}${!h.geheim && heftCode(h) ? `<pre class="hcode">${esc(heftCode(h))}</pre>` : ''}${heftFragen(h)}</div>`;
   if (h.art === 'sort') return `<div class="hbsp">${kopf}<pre class="hcode">${esc(h.geheim ? '' : heftCode(h))}</pre></div>`;
   return `<div class="hbsp hzwei">${heftAcker(h)}<div>${kopf}<pre class="hcode">${esc(heftCode(h))}</pre></div></div>`;
 }
+
+const heftFragen = (h) => {
+  const z = (h.fragen || []).map((f) => {
+    let soll = '';
+    try { soll = f.art === 'wahl' ? f.optionen[f.richtig] : f.art === 'zahl' ? f.soll() : ''; } catch (e) { soll = ''; }
+    return soll === '' || soll == null ? '' : `<li>${esc(f.text)} <b>✔ ${esc(String(soll))}</b></li>`;
+  }).filter(Boolean);
+  return z.length ? `<ul class="hfragen">${z.join('')}</ul>` : '';
+};
 
 // 🔭 Späherturm: gespeicherte Ergebnisse (kiEnde → P.kiHeft[id])
 function heftKi(h) {
@@ -209,7 +220,7 @@ function heftKi(h) {
 function heftKapitelSeite(k, nr) {
   const m = HEFT_MERKE[k] || HEFT_EXTRA[k] || {}, K = KAPITEL[k];
   return `<section class="hseite hkap" id="h-k${k}"><h2>${nr} ${K.ico} ${esc(m.titel || K.name)}</h2>
-    <div class="hmerke"><b>Merke</b>${(m.text || []).map((s) => `<p>${esc(s)}</p>`).join('')}${m.code ? `<pre class="hcode">${esc(m.code)}</pre>` : ''}</div>
+    <div class="hmerke"><b>Merke</b>${(m.text || []).map((s) => `<p>${esc(s)}</p>`).join('')}${m.bild ? `<div class="hmbild">${m.bild()}</div>` : ''}${m.code ? `<pre class="hcode">${esc(m.code)}</pre>` : ''}</div>
     <div class="hbeispiele"><b>Aus meinem Spiel</b>${heftBeispiele(k).map(heftBeispiel).join('')}</div></section>`;
 }
 
