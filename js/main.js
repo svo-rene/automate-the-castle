@@ -5,6 +5,9 @@
 // Bot mit 0,6: Burg 21/29/30 wie Burg 8 – mittel ≈ Nacht 31–33 nach 40 Tagen, Kampagne für alle schaffbar)
 const LK_LOHN = 0.6;
 for (const h of HOEFE) if (BURGEN[hofBurg(h)]?.klasse === 'LK' && !h.lkLohn) { h.lohn = Math.round(h.lohn * LK_LOHN); h.lkLohn = true; }
+// 🪙 Sek I: Lohn × LOHN_PLUS (2026-11-15, Nutzer: „zu wenig Gold – nie Geld für Mauer, Reichweite, Zauber“; Messung in balance.js)
+const LOHN_PLUS = 1.3;
+for (const h of HOEFE) if (BURGEN[hofBurg(h)]?.klasse !== 'LK' && !h.lohnPlus) { h.lohn = Math.round(h.lohn * LOHN_PLUS); h.lohnPlus = true; }
 
 // Lädt CodeMirror nicht, springt ein einfaches Textfeld mit denselben Methoden ein.
 function plainEditor(parent, { doc, onChange }) {

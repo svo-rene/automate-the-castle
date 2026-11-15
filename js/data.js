@@ -14,7 +14,8 @@ const NACHARBEIT = 0.4;    // schon gelöster Hof: 40 % Lohn (neue Sterne zähle
 // Solange in der Burg noch Aufgaben offen sind, nur ein Teil (NACHT_GOLD_OFFEN) – Gold kommt vor allem vom Programmieren.
 // 2026-11-10 Spieltest: „+3 🪙 für 42 Monster“ fühlte sich nach nichts an – offen jetzt 0,22 statt 0,15.
 // (0,3 war zu viel: für Schwache brachte die Nacht fast so viel wie der Tag – Programmieren soll sich mehr lohnen.)
-const NACHT_GOLD = 0.3, NACHT_GOLD_OFFEN = 0.22;
+// 2026-11-15 Nutzer: „zu wenig Gold – alles ging in Türme, Mauer und Zauber waren nie drin“ → offen 0,28 (Messung in balance.js-Kommentar)
+const NACHT_GOLD = 0.3, NACHT_GOLD_OFFEN = 0.28;
 const KAUF_BESTAETIGEN = 100; // Käufe ab 100 🪙 brauchen ein zweites Antippen
 
 // Regionen der Landkarte (Plan Abschnitt 7). Spielbar ist vorerst nur 🌾 Höfe.
@@ -57,7 +58,7 @@ const imPortalNebel = (x, y) => PORTALE.some((p) => Math.hypot(x - p.weg[0][0], 
 const neueTurmId = () => { let i = 0; while (P.tuerme[i]) i++; return i; };
 // 🪙 Ab dem 5. Turm kostet jeder weitere etwas mehr (×TURM_TEURER je Turm) – sonst stellt man im späten Spiel einfach
 // Dutzende Türme hin (Bot ohne: Nacht 58/56/52 statt 49/43/30; mit 1,15 noch 20 Türme). Gleichzeitig die Gold-Senke fürs späte Spiel.
-let TURM_TEURER = 1.3;   // let: im Test-Tab zum Ausprobieren
+let TURM_TEURER = 1.45;   // let: im Test-Tab zum Ausprobieren · 2026-11-15: 1,3 → 1,45, damit das Mehr an Gold nicht nur in noch mehr Türme geht
 const TURM_GUENSTIG = 4;
 // 🪙 Rabatt aus dem Talentnetz (Fund „Baumeisterin“): Summe der turm_rabatt-Werte gelernter Knoten
 const turmRabatt = () => typeof TALENTE === 'undefined' ? 1 : 1 - Math.min(0.5, (P?.talente || []).reduce((s, id) => s + (TALENTE[id]?.mod?.turm_rabatt || 0), 0) + (typeof schatzSumme === 'function' ? schatzSumme('turm_rabatt') : 0));
@@ -82,7 +83,7 @@ const PLATZ_PREIS = [50, 70, 100, 130, 170, 220, 280, 350, 430, 520, 620];
 const MAUER_HP = 12;
 // Mauer verstärken: jede Stufe +MAUER_PLUS Leben
 const MAUER_PLUS = 3;
-const MAUER_PREIS = [80, 140, 220, 320, 450, 600, 780, 1000, 1250, 1550, 1900, 2300];
+const MAUER_PREIS = [60, 100, 150, 210, 280, 360, 450, 560, 700, 860, 1050, 1300];   // 2026-11-15 günstiger (vorher 80, 140, 220 … 2300): Mauer soll neben Türmen regelmäßig drin sein
 // 🤖 Roboter: arbeiten jeden Morgen mit deinem gespeicherten Code auf einem gelösten Hof (wechselnde Variante)
 const ROBO_PREIS = [120, 200, 320, 480, 700, 950];
 const ROBO_ANTEIL = 0.25;        // Anteil am Hof-Lohn, wenn der Code klappt
@@ -407,7 +408,7 @@ function wellenFuer(n) {
 const WACHE = [
   { n: 2, hp: 14, dmg: 3 }, { n: 3, hp: 20, dmg: 4 }, { n: 3, hp: 30, dmg: 6 }, { n: 4, hp: 38, dmg: 8 }, { n: 4, hp: 50, dmg: 11 },
 ];
-const WACHE_PREIS = [90, 180, 320, 500];
+const WACHE_PREIS = [70, 140, 250, 400];   // 2026-11-15 günstiger (vorher 90, 180, 320, 500)
 const WACHE_POSTEN = [[12.35, 4.6], [12.35, 5.4], [11.7, 5.0], [13.0, 5.0]];   // eng am Weg vor dem Tor (die Bauplätze liegen daneben)
 const WACHE_WIEDER = 8;   // Sekunden bis ein gefallener Soldat wieder aufsteht
 // Mauer in der Pause reparieren

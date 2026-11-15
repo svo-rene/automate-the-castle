@@ -27,8 +27,9 @@ const platzZahl = (level = heldLevel().level) => ZAUBERPLATZ_AB.filter((l) => le
 const sockelZahl = () => platzZahl() + (talentHat('zauberplatz') ? 1 : 0) + schatzSumme('zauberplatz');   // + 🏅 Schätze (abzeichen.js)   // ✦ Wunder „Fünfter Zauberplatz“ (talente.js)
 const naechsterPlatzAb = () => ZAUBERPLATZ_AB.find((l) => l > heldLevel().level);
 const STUETZ_MAX = 3;                          // Verstärker-Plätze je Zauber
-const STUETZ_PREIS = [300, 600, 1000, 1500, 2200, 3000, 4000, 5000, 6000, 7000, 8000, 9000];   // jeder gekaufte Platz teurer
-const stuetzOffen = () => P.nacht > KAMPAGNE || alleAufgabenGeloest();
+const STUETZ_PREIS = [150, 300, 500, 800, 1200, 1800, 2600, 3500, 4500, 5500, 6500, 7500];   // jeder gekaufte Platz teurer (2026-11-15: günstiger, vorher ab 300)
+const stuetzOffen = () => P.nacht >= STUETZ_AB || alleAufgabenGeloest();   // 2026-11-15: ab Nacht 6 statt erst nach der Kampagne – Zauber ausbauen soll früh eine Wahl sein
+const STUETZ_AB = 6;
 
 // ➕ Verstärker: wirk/was je Richtung des Zaubers (dieselben Mechaniken wie im Talentnetz); element = zählt für Kombos mit
 const STUETZEN = {

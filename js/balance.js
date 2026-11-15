@@ -11,22 +11,31 @@ let BOT_ZIELE = ['Abpraller', 'Schnellzauber', 'Pfeilhagel', 'Funkenregen', 'Ste
 
 let BOT_TURM_MEHR = 1.5;   // ab dem 4. Turm: so viel teurer kommt dem Bot jeder weitere Turm vor
 // Abend: so lange kaufen, wie Gold da ist – immer das Günstigste (neuer Turm oder Ausbau)
+// 🪙 Gold-Abstimmung 2026-11-15 (Nutzer: „zu wenig Gold, alles ging in Türme – Mauer, Reichweite, Zauber nie drin“).
+// Bot 50 Tage, Burg 7, BOT_AUSG = wofür das Gold ging. Änderung: Lohn ×1,3 (LOHN_PLUS), Nacht offen 0,22 → 0,28,
+// TURM_TEURER 1,3 → 1,45, Mauer/Torwache/Verstärker-Plätze günstiger, Verstärker ab Nacht 6 (STUETZ_AB).
+//            Einnahmen      in Türme     Extras (Mauer, Wache, Zauber, Schätze, Roboter)   Nacht T50   verloren
+//   gut      10709 → 15422  72 % → 65 %   2920 → 4700  (Mauer 3 → 5, Wache 2 → 3)          44 → 45     6 → 5
+//   mittel    5859 →  8334  75 % → 67 %   1380 → 2640  (Mauer 2 → 4, Wache 2 → 3)          42 → 44     8 → 6
+//   schwach   2632 →  3401  83 % → 66 %    440 → 1140  (Mauer 1 → 3, Wache 1 → 2)          39 → 39    11 → 11
+let BOT_AUSG = {};
 function botKaufen() {
   for (let runde = 0; runde < 30; runde++) {
     const moeglich = [];
     const zahl = Object.keys(P.tuerme).length;
     // 🤖 Roboter auf den lohnendsten gelösten Hof ohne Roboter
     const robHof = burgHoefe().filter((h) => !h.art && P.hoefe[h.id]?.fertig && !P.roboter[h.id]).sort((a, b) => b.lohn - a.lohn)[0];
-    if (roboterBekannt() && robHof && roboPreis() !== undefined) moeglich.push({ preis: roboPreis() * 0.8, kosten: roboPreis(), tu: () => { P.roboter[robHof.id] = { seit: 0 }; } });
+    if (roboterBekannt() && robHof && roboPreis() !== undefined) moeglich.push({ kat: "robo", preis: roboPreis() * 0.8, kosten: roboPreis(), tu: () => { P.roboter[robHof.id] = { seit: 0 }; } });
     // ➕ Verstärker-Platz kaufen (für den liebsten eingesetzten Zauber, der noch Platz hat)
     const stuetzZiel = ausgeruestet().find((t) => stuetzSockel(t) < STUETZ_MAX);
-    if (stuetzOffen() && stuetzZiel !== undefined && STUETZ_PREIS[P.stuetzGekauft]) moeglich.push({ preis: STUETZ_PREIS[P.stuetzGekauft], tu: () => { P.stuetzGekauft++; P.stuetzSockel[stuetzZiel] = stuetzSockel(stuetzZiel) + 1; botSteine(); } });
+    if (stuetzOffen() && stuetzZiel !== undefined && STUETZ_PREIS[P.stuetzGekauft]) moeglich.push({ kat: "zauber", preis: STUETZ_PREIS[P.stuetzGekauft], tu: () => { P.stuetzGekauft++; P.stuetzSockel[stuetzZiel] = stuetzSockel(stuetzZiel) + 1; botSteine(); } });
     // 🌫️ Nebel vertreiben, sobald 4 Türme stehen (mehr Bauland = bessere Plätze für weitere Türme)
     const lp = BAULAND_PREIS[P.bauland || 0];
-    if (lp && zahl >= 4) moeglich.push({ preis: lp * 1.2, kosten: lp, tu: () => { P.bauland = (P.bauland || 0) + 1; } });
+    if (lp && zahl >= 4) moeglich.push({ kat: "land", preis: lp * 1.2, kosten: lp, tu: () => { P.bauland = (P.bauland || 0) + 1; } });
     // 🏅 freigeschaltete Schätze (abzeichen.js) – gern, sie sind meist stark
-    for (const id of Object.keys(SCHAETZE)) if (schatzFrei(id) && !schatzHat(id) && !(typeof schatzSchonWunder === 'function' && schatzSchonWunder(id))) moeglich.push({ preis: SCHAETZE[id].preis * 0.7, kosten: SCHAETZE[id].preis, tu: () => { (P.schaetze ||= {})[id] = true; } });
-    if (MAUER_PREIS[P.mauer]) moeglich.push({ preis: MAUER_PREIS[P.mauer] * 1.5, kosten: MAUER_PREIS[P.mauer], tu: () => { P.mauer++; } });
+    for (const id of Object.keys(SCHAETZE)) if (schatzFrei(id) && !schatzHat(id) && !(typeof schatzSchonWunder === 'function' && schatzSchonWunder(id))) moeglich.push({ kat: "schatz", preis: SCHAETZE[id].preis * 0.7, kosten: SCHAETZE[id].preis, tu: () => { (P.schaetze ||= {})[id] = true; } });
+    if (WACHE_PREIS[P.wache]) moeglich.push({ kat: "wache", preis: WACHE_PREIS[P.wache] * 1.5, kosten: WACHE_PREIS[P.wache], tu: () => { P.wache++; } });
+    if (MAUER_PREIS[P.mauer]) moeglich.push({ kat: "mauer", preis: MAUER_PREIS[P.mauer] * 1.5, kosten: MAUER_PREIS[P.mauer], tu: () => { P.mauer++; } });
     // 🏗️ Freie Türme: neuer Turm auf den besten freien Platz (guterPlatz). Jeder weitere Turm ist dem Bot etwas weniger wert
     // als ein Ausbau (preis steigt mit der Zahl der Türme), sonst stellt er nur billige Türme hin.
     {
@@ -36,20 +45,21 @@ function botKaufen() {
       const art = anzahl('pfeil') === 0 ? 'pfeil'
         : ['blitz', 'kanone', 'katapult', 'eis', 'pfeil'].find((a) => TUERME[a].ab <= P.nacht && anzahl(a) < ziel[a]) || 'pfeil';
       const kosten = turmPreis(art);
-      moeglich.push({ preis: kosten * (1 + BOT_TURM_MEHR * Math.max(0, zahl - 3)), kosten, tu: () => {
+      moeglich.push({ kat: "turm", preis: kosten * (1 + BOT_TURM_MEHR * Math.max(0, zahl - 3)), kosten, tu: () => {
         const p = guterPlatz(art);
         if (p) P.tuerme[neueTurmId()] = { art, wahl: [], x: p.x, y: p.y, bezahlt: kosten }; else P.gold += kosten;
       } });
     }
     for (const tw of Object.values(P.tuerme)) {
       const st = turmStufe(tw);
-      if (st < MAX_STUFE) moeglich.push({ preis: ausbauPreis(tw.art, st), tu: () => tw.wahl.push(st % 2 ? 'a' : 'b') });
-      else if ((tw.vet || 0) < VETERAN_MAX) { const vp = veteranPreis(tw.art, tw.vet || 0); moeglich.push({ preis: vp * 1.3, kosten: vp, tu: () => { tw.vet = (tw.vet || 0) + 1; } }); }   // 🎖️ Veteranen (data.js)
+      if (st < MAX_STUFE) moeglich.push({ kat: st >= 4 ? "meister" : "ausbau", preis: ausbauPreis(tw.art, st), tu: () => tw.wahl.push(st % 2 ? 'a' : 'b') });
+      else if ((tw.vet || 0) < VETERAN_MAX) { const vp = veteranPreis(tw.art, tw.vet || 0); moeglich.push({ kat: "veteran", preis: vp * 1.3, kosten: vp, tu: () => { tw.vet = (tw.vet || 0) + 1; } }); }   // 🎖️ Veteranen (data.js)
     }
     // preis = wie gern der Bot es kauft (Mauer nachrangig), kosten = was es wirklich kostet
     const billig = moeglich.filter((m) => (m.kosten ?? m.preis) <= P.gold).sort((a, b) => a.preis - b.preis)[0];
     if (!billig) return;
     P.gold -= billig.kosten ?? billig.preis;
+    BOT_AUSG[billig.kat] = (BOT_AUSG[billig.kat] || 0) + (billig.kosten ?? billig.preis);   // fürs Messen: wofür ging das Gold?
     billig.tu();
   }
 }
@@ -89,6 +99,7 @@ function botLauf(typ = 'gut', tage = 40) {
   const echt = P, zeilen = [], endlosVorher = ENDLOS;
   ENDLOS = typ === 'endlos';
   P = ENDLOS ? endlosStand() : neuerStand();
+  BOT_AUSG = {};
   let versuch = 0;
   for (let tag = 1; tag <= tage; tag++) {
     // Morgen: Roboter (gut = Code klappt immer und ist sparsam, mittel = klappt, schwach = jeder zweite Morgen)
@@ -134,7 +145,7 @@ function botLauf(typ = 'gut', tage = 40) {
     zeilen.push({ tag, hof: h ? h.id : '–', lohn: Math.round(lohn), robo, nachtgold, roboter: Object.keys(P.roboter).length, nacht: n, ergebnis: sieg ? `✓ ${Math.ceil(N.hp)}/${N.max}` : '✗', xp: P.xp,
       gold: P.gold, ruhm: ruhm(), sterne: ENDLOS ? 0 : sternePunkte(), schaetze: Object.keys(SCHAETZE).filter(schatzHat).length, tuerme: Object.values(P.tuerme).map((t) => TUERME[t.art].ico + turmStufe(t)).join(''), level: heldLevel().level });
   }
-  window.BOT_LETZT = P;   // zum Nachmessen (z. B. simNacht mit dem Stand des Bots)
+  window.BOT_LETZT = P; window.BOT_AUSG = BOT_AUSG;   // zum Nachmessen (z. B. simNacht mit dem Stand des Bots)
   P = echt; ENDLOS = endlosVorher;
   return zeilen;
 }
