@@ -17,7 +17,7 @@ function hud() {
   $('#goldPill').textContent = `🪙 ${P.gold}`;
   // Held-Level erst, wenn es XP gibt
   const L = heldLevel(), hp = $('#heldPill');
-  hp.classList.toggle('hidden', !P.xp);
+  hp.classList.toggle('hidden', !P.xp || !heldOffen());
   hp.textContent = `🧙 ${L.level}`;
   hp.title = `${PROFIL.figur === 'w' ? 'Heldin' : 'Held'} Level ${L.level} · ${L.rest}/${L.noetig} XP`;
   // 🏆 Ruhm (Verteidigung) und ⭐ Sterne (Aufgaben) getrennt, je mit Abzeichen (abzeichen.js); 🎁 = Schatz zum Kaufen frei

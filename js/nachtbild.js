@@ -791,6 +791,9 @@ function zeichneAnzeige(g, k, W, N, kompakt = false) {
   g.font = '13px "Lilita One", sans-serif'; g.fillStyle = '#fff'; g.textAlign = 'center'; g.textBaseline = 'middle';
   g.fillText(`${Math.ceil(N.hp)}/${N.max}${N.schild > 0 ? `  🛡️${Math.ceil(N.schild)}` : ''}`, 38 + bw / 2, 23);
   // 🧙 XP-Leiste: füllt sich mit jedem besiegten Gegner (läuft weich nach), Aufstieg mit Glanz über dem Helden
+  const xb = bw * 0.75;
+  // 🐢 vor HELD_AB (data.js) keine XP-Leiste und kein Level-up – XP zählen still mit
+  if (heldOffen()) {
   const L = heldLevel(P.xp + N.xp);
   if (N.lvlZeige === undefined) N.lvlZeige = L.level;
   if (L.level > N.lvlZeige) {
@@ -801,7 +804,6 @@ function zeichneAnzeige(g, k, W, N, kompakt = false) {
   const ziel = L.rest / L.noetig;
   N.xpBalken = N.xpBalken === undefined || ziel < N.xpBalken - 0.5 ? ziel : N.xpBalken + (ziel - N.xpBalken) * 0.15;
   if (N.xpGlanz > 0) N.xpGlanz -= 1 / 60;
-  const xb = bw * 0.75;
   g.fillStyle = 'rgba(8,16,40,.82)'; g.beginPath(); g.roundRect(8, 40, xb + 74, 22, 11); g.fill();
   g.fillStyle = '#241a3e'; g.beginPath(); g.roundRect(38, 46, xb, 10, 5); g.fill();
   g.fillStyle = N.xpGlanz > 0 ? '#f0e0ff' : '#a98bff'; g.beginPath(); g.roundRect(38, 46, Math.max(0, xb * N.xpBalken), 10, 5); g.fill();
@@ -812,6 +814,7 @@ function zeichneAnzeige(g, k, W, N, kompakt = false) {
   g.restore();
   g.strokeStyle = '#e0b030'; g.lineWidth = 2.5; g.beginPath(); g.arc(23, 51, 14, 0, Math.PI * 2); g.stroke();
   g.font = '11px "Lilita One", sans-serif'; g.fillStyle = '#e0d4ff'; g.textAlign = 'left'; g.fillText(`Lv ${L.level}`, 38 + xb + 4, 51); g.textAlign = 'center';
+  }
   // 🔗 Kombo-Leiste: jede ausgelöste Kombo lädt sie, voll = Kombo-Ausbruch
   if (N.kombosAn?.size || N.komboLadung || N.ausbruch) {
     const kl = N.ausbruch ? 1 : Math.min(1, (N.komboLadung || 0) / KOMBO_LADUNG), voll = N.ausbruch;
@@ -1043,7 +1046,7 @@ function zeichneNacht(cv, N, opt = {}) {
       for (let j = 0; j < 7; j++) { const w = (j / 7) * Math.PI * 2; FZ.kreis(g, x + Math.cos(w) * a * (0.8 + bau), y + a * 1.0 + Math.sin(w) * a * 0.3 * (1 + bau), a * (0.25 + bau * 0.2), `rgba(210,190,150,${0.6 * (1 - bau)})`); }
     } else mitUmriss(g, () => malTurm(g, tw.art, turmStufe(tw), x, y + a * 0.2, a, jetzt, schuss, tw.wahl));   // gezeichnet (figuren.js)
     // ⬆️ Abends (und in der Pause): Der nächste Ausbau ist bezahlbar – kleines goldenes Zeichen über dem Turm
-    if ((!N || opt.bauen) && !opt.mini && (turmStufe(tw) < MAX_STUFE ? P.gold >= ausbauPreis(tw.art, turmStufe(tw))
+    if ((!N || opt.bauen) && !opt.mini && ausbauOffen() && (turmStufe(tw) < MAX_STUFE ? P.gold >= ausbauPreis(tw.art, turmStufe(tw))
       : (tw.vet || 0) < VETERAN_MAX && P.gold >= veteranPreis(tw.art, tw.vet || 0))) {   // 🎖️ auch: Veteran bezahlbar
       const ux = x + a * 0.95, uy = y - a * 1.55 - Math.abs(Math.sin(jetzt * 3 + i)) * a * 0.12;
       g.fillStyle = '#ffd84a'; g.strokeStyle = '#8a6200'; g.lineWidth = 2;

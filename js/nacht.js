@@ -1280,7 +1280,7 @@ function nachtSchritt(N) {
     N.xp += wx;
     const wg = Math.round(welleXp(N.n) * N.goldJe);
     nachtGold(N, wg);
-    N.fx.push({ typ: 'ansage', t: 2.4, text: `✅ Welle ${N.welle + 1} gehalten! +${wx} XP${wg ? ` · +${wg} 🪙` : ''}` });
+    N.fx.push({ typ: 'ansage', t: 2.4, text: `✅ Welle ${N.welle + 1} gehalten!${heldOffen() ? ` +${wx} XP` : ''}${wg ? ` · +${wg} 🪙` : ''}` });
     if (N.live) { N.zwischen = true; N.halt = true; return; }
     if (N.zwischenFn) N.zwischenFn(N);
     naechsteWelle(N);
@@ -1411,7 +1411,7 @@ function nachtKnoepfe() {
   });
   const frei = punkteFrei() + Math.max(0, spezPunkte()), knoepfe = [];
   if (N && !N.halt) knoepfe.push({ label: '⏸<span class="lbl"> Pause</span>', title: 'Anhalten: Mauer reparieren, Torwache, bauen', fn: () => { N.halt = true; nachtInfo(); nachtKnoepfe(); }, cls: 'leise' });
-  if (P.xp || frei > 0) knoepfe.push({ label: `✨<span class="lbl"> Talente</span>${frei > 0 ? ` <span class="badge">${frei}</span>` : ''}`, title: 'Talentbaum (die Nacht wartet)', fn: talentBlatt, cls: frei > 0 ? 'gruen puls' : 'leise' });
+  if ((P.xp && heldOffen()) || frei > 0) knoepfe.push({ label: `✨<span class="lbl"> Talente</span>${frei > 0 ? ` <span class="badge">${frei}</span>` : ''}`, title: 'Talentbaum (die Nacht wartet)', fn: talentBlatt, cls: frei > 0 ? 'gruen puls' : 'leise' });
   neben(knoepfe);
 }
 
@@ -1613,10 +1613,10 @@ function nachtEnde() {
   if (kg && !ENDLOS && !P.gesehen.nachtgold && !PROFIL.gesehen?.nachtgold) { P.gesehen.nachtgold = true; (PROFIL.gesehen ||= {}).nachtgold = true; profilSpeichern(); speichern(); kgZeile = `<p class="hinweis">💡 <b>${kg.titel}:</b> ${kg.text}</p>`; }
   // Nutzerwunsch 2026-11-14 („nach dem Sieg weniger Text“): sichtbar nur Ergebnis, Belohnung in einer Zeile, Level/Abzeichen;
   // Ruhm-Erklärung, Tor-Liste mit Tipps, Kombos, Kopfgeld und Bilanz liegen unter „Mehr“ (Regeln stehen im 📓 Heft)
-  const lohnTeile = [gold > 0 ? `+${gold} 🪙` : "", xp > 0 ? `<span style="color:#c9b8ff">+${xp} XP</span>` : "", ruhmPlus ? `🏆 ${ruhmPlus > 0 ? "+" : "−"}${Math.abs(ruhmPlus)}` : ""].filter(Boolean);
+  const lohnTeile = [gold > 0 ? `+${gold} 🪙` : "", xp > 0 && heldOffen() ? `<span style="color:#c9b8ff">+${xp} XP</span>` : "", ruhmPlus ? `🏆 ${ruhmPlus > 0 ? "+" : "−"}${Math.abs(ruhmPlus)}` : ""].filter(Boolean);
   const lohnZeile = lohnTeile.length ? `<p class="lohn">${lohnTeile.join(" · ")}</p>` : "";
   const kurzZeilen = [
-    neu ? `<p class="lohn" style="color:#c9b8ff">🧙 Level ${heldLevel().level}! +${neu} Talentpunkt${neu > 1 ? 'e' : ''}</p>` : '',
+    neu && heldOffen() && P.gesehen.heldFrei ? `<p class="lohn" style="color:#c9b8ff">🧙 Level ${heldLevel().level}! +${neu} Talentpunkt${neu > 1 ? 'e' : ''}</p>` : '',
     neuerPlatz ? '<p class="lohn" style="color:#c9b8ff">🪄 Neuer Zauberplatz!</p>' : '',
     neueMonster.length ? `<p class="hinweis">👾 Neu: ${neueMonster.map((a) => GEGNER[a].name).join(", ")} – nachschauen: ☰ → 👾 Monsterbuch</p>` : "",
     komboRest.length ? `<p class="hinweis">🔗 Neue Kombo: ${komboRest.map((k) => `${k.ico} ${esc(k.name)}`).join(', ')}</p>` : '',

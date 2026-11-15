@@ -60,6 +60,12 @@ const neueTurmId = () => { let i = 0; while (P.tuerme[i]) i++; return i; };
 // Dutzende Türme hin (Bot ohne: Nacht 58/56/52 statt 49/43/30; mit 1,15 noch 20 Türme). Gleichzeitig die Gold-Senke fürs späte Spiel.
 let TURM_TEURER = 1.45;   // let: im Test-Tab zum Ausprobieren · 2026-11-15: 1,3 → 1,45, damit das Mehr an Gold nicht nur in noch mehr Türme geht
 const TURM_GUENSTIG = 4;
+// 🐢 Langsamer Einstieg (Nutzerwunsch 2026-11-15: „erst Türme, dann Türme ausbauen, dann Level“): Türme gibt es ab Nacht 1,
+// Ausbauen ab AUSBAU_AB, Held-Level/Talente ab HELD_AB. XP zählen vorher still mit – die Punkte kommen dann gesammelt.
+// Wer es schon einmal freigeschaltet hat (Profil, alle Burgen), hat es sofort. Werte nach Bot-Messung (balance.js).
+let AUSBAU_AB = 2, HELD_AB = 4;   // let: im Test-Tab zum Messen · Bot (16 Tage): 2/4 so schaffbar wie ohne Sperre, 3/4 für „schwach“ in einem Lauf 3 statt 1 Niederlage
+const ausbauOffen = () => ENDLOS || P.nacht >= AUSBAU_AB || !!PROFIL.gesehen?.ausbauFrei || Object.values(P.tuerme || {}).some((t) => t.wahl?.length);
+const heldOffen = () => ENDLOS || P.nacht >= HELD_AB || !!PROFIL.gesehen?.heldFrei || (P.talente || []).length > 1;
 // 🪙 Rabatt aus dem Talentnetz (Fund „Baumeisterin“): Summe der turm_rabatt-Werte gelernter Knoten
 const turmRabatt = () => typeof TALENTE === 'undefined' ? 1 : 1 - Math.min(0.5, (P?.talente || []).reduce((s, id) => s + (TALENTE[id]?.mod?.turm_rabatt || 0), 0) + (typeof schatzSumme === 'function' ? schatzSumme('turm_rabatt') : 0));
 const turmPreis = (art) => Math.round(TUERME[art].preis * TURM_TEURER ** Math.max(0, Object.keys(P.tuerme).length - TURM_GUENSTIG + 1) * turmRabatt());

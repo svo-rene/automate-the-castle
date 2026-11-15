@@ -444,7 +444,7 @@ function heldLevel(xp = P.xp) {
   while (xp >= xpFuerLevel(l)) { xp -= xpFuerLevel(l); l++; }
   return { level: l, rest: xp, noetig: xpFuerLevel(l) };
 }
-const punkteFrei = () => heldLevel().level - 1 + (P.erbePunkt || 0) - (P.talente.length - 1);
+const punkteFrei = () => (heldOffen() ? heldLevel().level - 1 + (P.erbePunkt || 0) - (P.talente.length - 1) : 0);   // vor HELD_AB: noch keine Punkte (XP zählen still mit)
 
 // Summe aus Steinen im Sockel, allen gelernten Talenten (wirken immer) und aktiven Kombos
 function talentWerte(liste = [...P.talente, ...P.spezTal]) {

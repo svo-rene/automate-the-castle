@@ -499,7 +499,7 @@ function abendStart() {
   }
   // Talente erst, wenn der Held XP hat (Abzeichen: freie Talent- und Spezialisierungspunkte)
   const frei = punkteFrei() + Math.max(0, spezPunkte());
-  neben(P.xp ? [{ label: `✨<span class="lbl"> Talente</span>${frei > 0 ? ` <span class="badge">${frei}</span>` : ''}`, title: 'Talente und Zauber des Helden', fn: () => talentBlatt(), cls: frei > 0 ? 'gruen' : 'leise' }] : []);
+  neben(P.xp && heldOffen() ? [{ label: `✨<span class="lbl"> Talente</span>${frei > 0 ? ` <span class="badge">${frei}</span>` : ''}`, title: 'Talente und Zauber des Helden', fn: () => talentBlatt(), cls: frei > 0 ? 'gruen' : 'leise' }] : []);
   $('#scr-karte').innerHTML = `<div class="kopf"><h1>🌇 Abend</h1><span class="sub">Türme neben den Weg stellen, dann oben „🌙 Nacht starten“.</span></div>
     <div class="abend-grid">
       <div class="feldreihe"><div class="nachtbox"><canvas id="abendCanvas"></canvas><div class="bauok"></div></div><div class="bauleiste"></div></div>
@@ -526,8 +526,25 @@ function abendStart() {
     }
   }
   const billig = Math.min(...Object.values(TUERME).map((t) => t.preis));
+  // 🐢 Langsamer Einstieg (data.js AUSBAU_AB/HELD_AB): beim ersten Abend danach kurz zeigen, was neu ist – mit Finger
+  const ausbauNeu = ausbauOffen() && !PROFIL.gesehen?.ausbauFrei && Object.keys(P.tuerme).length > 0;
+  const heldNeu = !ausbauNeu && heldOffen() && !P.gesehen.heldFrei && P.xp > 0;
+  if (ausbauNeu) {
+    (PROFIL.gesehen ||= {}).ausbauFrei = true; profilSpeichern();
+    const tw = Object.values(P.tuerme)[0];
+    anleitung('ausbau', [
+      { ziel: () => ({ el: $('#abendCanvas'), fx: (tw.x + 0.5) / NFELD.w, fy: (tw.y + 0.5) / NFELD.h }), text: '⬆️ Neu: Türme ausbauen! Tippe deinen Turm an.', fertig: () => karteOffen() && !!$('#turmBlatt') },
+      { ziel: () => $('#turmBlatt .ausbaukarte'), text: 'Wähle einen der zwei Ausbauten – dann darunter kaufen.', fertig: () => !karteOffen() || Object.values(P.tuerme).some((t) => t.wahl.length) },
+    ], () => P.phase === 'abend');
+  } else if (heldNeu) {
+    P.gesehen.heldFrei = true; (PROFIL.gesehen ||= {}).heldFrei = true; profilSpeichern();
+    const L = heldLevel();
+    erklaere('talente', ` Dein Held 🧙 ist jetzt Level ${L.level} – ${frei} Punkt${frei === 1 ? '' : 'e'} warten.`);
+    anleitung('talente', [{ ziel: () => [...document.querySelectorAll('#neben button')].find((b) => b.textContent.includes('Talente')), text: 'Hier oben: ✨ Talente lernen', fertig: () => karteOffen() && !!$('#talentBaum') }], () => P.phase === 'abend');
+  }
   // Führt der 👆 Finger durchs erste Bauen, braucht es keine Karte davor (Nutzerwunsch: nur erklären, wenn man es braucht)
-  if (!P.gesehen.bauen && !Object.keys(P.tuerme).length && P.gold >= billig) { P.gesehen.bauen = true; }
+  if (ausbauNeu || heldNeu) { /* oben erklärt */ }
+  else if (!P.gesehen.bauen && !Object.keys(P.tuerme).length && P.gold >= billig) { P.gesehen.bauen = true; }
   else if (erklaere('bauen', P.gold < billig ? ` Ein Turm kostet ${billig} 🪙 – heute reicht es noch nicht.` : '')) { /* Abend erklärt */ }
   else if (frei > 0 && erklaere('talente', ' Dein Held 🧙 ist aufgestiegen – oben: ✨ Talente.')) { /* Netz erklärt */ }
   else erklaerungenPruefen();
@@ -832,7 +849,8 @@ function turmBlattRender() {
   const kaufO = kaufHier ? t.wege[i0][TB.wahl[1] === 'a' ? 0 : 1] : null, kaufPreis = kaufHier ? ausbauPreis(tw.art, i0 + 1) : 0;
   box.innerHTML = `${kopf(`${t.ico} ${t.name} · Stufe ${stufe}`)}
     <div class="wahlleiste">${leiste}</div>
-    ${stufe < MAX_STUFE ? `<h3 class="kabschnitt">⬆️ Nächster Ausbau: Stufe ${stufe + 1}${stufe + 1 >= 5 ? ' · 👑 Meisterstufe' : ''} <span class="hinweis">– wähle einen der beiden Wege</span></h3>
+    ${!ausbauOffen() ? `<p class="hinweis">🔒 Türme ausbauen kannst du ab Nacht ${AUSBAU_AB}.</p>`
+    : stufe < MAX_STUFE ? `<h3 class="kabschnitt">⬆️ Nächster Ausbau: Stufe ${stufe + 1}${stufe + 1 >= 5 ? ' · 👑 Meisterstufe' : ''} <span class="hinweis">– wähle einen der beiden Wege</span></h3>
       <div class="ausbauwahl">${karteNaechst('a')}<span class="oder">oder</span>${karteNaechst('b')}</div>
       ${kaufHier ? `<div class="kaufzeile ${TB.wahl[1] === 'b' ? 'rechts' : 'links'}"><button class="btn gold" id="tbKauf" ${P.gold < kaufPreis ? 'disabled' : ''}>⬆️ ${kaufO.ico} ${esc(kaufO.name)} kaufen · ${kaufPreis} 🪙${fehlt(kaufPreis)}</button></div>` : ''}` : veteranHtml(tw)}
     <div id="turmInfo" class="turminfo"></div>

@@ -326,7 +326,7 @@ function erklaere(key, extra = '', fn) {
 // Was ist gerade neu? Höchstens eine Karte auf einmal (morgens und abends geprüft)
 const ERKL_WANN = [
   ['steine', () => P.phase === 'abend' && steinBesitz().length > 0],   // z. B. Zauber aus einem umgestellten alten Spielstand
-  ['talente', () => P.xp > 0 && P.talentVer >= 9 && P.phase === 'abend'],
+  ['talente', () => P.xp > 0 && heldOffen() && P.talentVer >= 9 && P.phase === 'abend'],
   ['ruhm', () => P.phase === 'abend' && ruhm() > 0 && P.nacht >= 4],   // erst ab Nacht 4 (Nutzerwunsch 2026-11-15: am Anfang weniger Infos)
   ['turmschild', () => P.phase === 'abend' && P.nacht >= KAMPAGNE + 2],   // am Abend vor der ersten Nacht mit Schilden
   ['nachtgold', () => P.tag >= 2],

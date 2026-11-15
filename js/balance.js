@@ -57,7 +57,7 @@ function botKaufen() {
     }
     for (const tw of Object.values(P.tuerme)) {
       const st = turmStufe(tw);
-      if (st < MAX_STUFE) moeglich.push({ kat: st >= 4 ? "meister" : "ausbau", preis: ausbauPreis(tw.art, st), tu: () => tw.wahl.push(st % 2 ? 'a' : 'b') });
+      if (st < MAX_STUFE && ausbauOffen()) moeglich.push({ kat: st >= 4 ? "meister" : "ausbau", preis: ausbauPreis(tw.art, st), tu: () => tw.wahl.push(st % 2 ? 'a' : 'b') });
       else if ((tw.vet || 0) < VETERAN_MAX) { const vp = veteranPreis(tw.art, tw.vet || 0); moeglich.push({ kat: "veteran", preis: vp * 1.3, kosten: vp, tu: () => { tw.vet = (tw.vet || 0) + 1; } }); }   // 🎖️ Veteranen (data.js)
     }
     // preis = wie gern der Bot es kauft (Mauer nachrangig), kosten = was es wirklich kostet
