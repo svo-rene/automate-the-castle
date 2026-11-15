@@ -1379,7 +1379,11 @@ document.addEventListener('keydown', (ev) => {
 
 // Hauptknopf: Tempo (läuft) oder Weiter (⏸ angehalten); links ⏸ Pause und ✨ Talente
 function nachtKnoepfe() {
-  if (N && N.zwischen) haupt(`▶ Welle ${N.welle + 2} 👑`, () => { N.halt = false; N.zwischen = false; naechsteWelle(N); nachtInfo(); nachtKnoepfe(); });
+  if (N && N.zwischen) {
+    haupt(`▶ Welle ${N.welle + 2} 👑`, () => { N.halt = false; N.zwischen = false; naechsteWelle(N); nachtInfo(); nachtKnoepfe(); });
+    // 👆 Erste Nacht (Nutzerwunsch 2026-11-15): zeigen, wo Welle 2 startet
+    if (N.n === 1) anleitung('welle2', [{ ziel: () => $('#hauptBtn'), text: 'Bereit? Hier startest du Welle 2!', fertig: () => !N || !N.zwischen }], () => P.phase === 'nacht');
+  }
   else if (N && N.halt) haupt('▶ Weiter', () => { N.halt = false; nachtInfo(); nachtKnoepfe(); });
   else haupt(`⏩<span class="lbl"> Tempo</span> ${nachtTempo}×`, () => {
     nachtTempo = nachtTempo >= 4 ? 1 : nachtTempo * 2;
@@ -1427,7 +1431,8 @@ function nachtFrame(now) {
   if (N.ende) { setTimeout(nachtEnde, 600); return; }
   // Kombo-Karten erst in der Wellenpause (Durchlauf: 4 Karten nacheinander mitten im Kampf); der Rest steht auf der Ergebniskarte
   if (N.neueKombos?.length && N.zwischen && !karteOffen()) { const ids = N.neueKombos.splice(0); komboKarte(ids[0], ids.slice(1)); }
-  else if (N.neueMonster?.length && !karteOffen()) monsterKarte(N.neueMonster.shift());
+  // 👾 Keine Monsterkarte mitten in der Nacht (Nutzerwunsch 2026-11-15: am Anfang unwichtig) – neue Monster stehen
+  // im Monsterbuch, ab Nacht 3 nennt die Ergebniskarte sie mit dem Weg dorthin
   zauberLeiste();
   // Aufstieg mitten in der Nacht: Talente-Knopf bekommt sein Abzeichen
   const lv = heldLevel(P.xp + N.xp).level;
@@ -1567,6 +1572,8 @@ function nachtEnde() {
   P.tag++;
   P.phase = 'morgen';
   nachtKombos = N.neueKombos || [];
+  const neueMonster = n >= 3 ? (N.neueMonster || []).filter((a) => GEGNER[a]) : [];   // 👾 erst ab Nacht 3 erwähnen
+  if (neueMonster.length) P.gesehen.monster = true;   // ab jetzt steht das Monsterbuch auch im Heft
   roboMorgen();   // 🤖 die Roboter arbeiten im Morgengrauen
   if (sieg) { P.nacht++; P.rekord = Math.max(P.rekord, n); P.niederlagen = 0; } else P.niederlagen++;
   speichern();
@@ -1591,6 +1598,7 @@ function nachtEnde() {
   const kurzZeilen = [
     neu ? `<p class="lohn" style="color:#c9b8ff">🧙 Level ${heldLevel().level}! +${neu} Talentpunkt${neu > 1 ? 'e' : ''}</p>` : '',
     neuerPlatz ? '<p class="lohn" style="color:#c9b8ff">🪄 Neuer Zauberplatz!</p>' : '',
+    neueMonster.length ? `<p class="hinweis">👾 Neu: ${neueMonster.map((a) => GEGNER[a].name).join(", ")} – nachschauen: ☰ → 👾 Monsterbuch</p>` : "",
     komboRest.length ? `<p class="hinweis">🔗 Neue Kombo: ${komboRest.map((k) => `${k.ico} ${esc(k.name)}`).join(', ')}</p>` : '',
     durchZahl && sieg ? `<p class="hinweis">🚪 ${durchZahl} Monster kam${durchZahl > 1 ? 'en' : ''} durchs Tor – Tipps unter „Mehr“.</p>` : '',
   ].join('');

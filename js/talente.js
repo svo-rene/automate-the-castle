@@ -600,7 +600,14 @@ function netzRender() {
   $('#talentInfo').innerHTML = '';   // Info schwebt im Netz, direkt beim angetippten Knoten (Nutzerwunsch: Knopf nah an der Auswahl)
   netzZoom({ x0, y0, w, h, U });
   $('#zuSteinen').onclick = () => { TTAB = 'steine'; talentRender(); };
-  for (const g of document.querySelectorAll('#talentBaum [data-t]')) g.onclick = () => { if (TZ.gezogen) return; TSEL = g.dataset.t; RESET_WARTE = false; talentRender(); };
+  // 📱 Nutzerwunsch 2026-11-15: am Handy liegt der Lernen-Knopf weit unten – den gewählten Knoten nochmal antippen = lernen
+  for (const g of document.querySelectorAll('#talentBaum [data-t]')) g.onclick = () => {
+    if (TZ.gezogen) return;
+    const id = g.dataset.t;
+    if (TSEL === id && talentLernbar(id)) { talentLernen(id); return; }
+    TSEL = id; RESET_WARTE = false; talentRender();
+    if (talentLernbar(id) && (P.gesehen.nochmalTippen || 0) < 3) { P.gesehen.nochmalTippen = (P.gesehen.nochmalTippen || 0) + 1; toast('👆 Nochmal antippen = lernen'); }
+  };
   talentInfo();
 }
 
@@ -701,7 +708,7 @@ function talentInfo() {
       ${drin !== undefined && an ? '<button class="btn leise" id="juwelRaus">Juwel herausnehmen</button>' : ''}</div>`;
   }
   box.innerHTML = `<div class="tart">${art}</div><h3>${t.ico} ${esc(t.name)}</h3><p>${esc(t.text)}</p>${jetzt}${wegText}
-    ${an ? '<p class="hinweis">✅ Gelernt</p>' : sperre ? (wegText && sperre.startsWith('Noch') ? '' : `<p class="hinweis">${esc(sperre)}</p>`) : '<button class="btn gold" id="lernBtn">Lernen (1 Punkt)</button>'}${meister}${juwel}`;
+    ${an ? '<p class="hinweis">✅ Gelernt</p>' : sperre ? (wegText && sperre.startsWith('Noch') ? '' : `<p class="hinweis">${esc(sperre)}</p>`) : '<button class="btn gold" id="lernBtn">Lernen (1 Punkt)</button><span class="hinweis"> oder Knoten nochmal antippen</span>'}${meister}${juwel}`;
   for (const mb of box.querySelectorAll('[data-meister]')) mb.onclick = () => { (P.meister ||= {})[gid] = +mb.dataset.meister; speichern(); talentRender(); };
   for (const jb of box.querySelectorAll('[data-juwel]')) jb.onclick = () => {
     const i = +jb.dataset.juwel;
@@ -712,16 +719,22 @@ function talentInfo() {
   const jr = $('#juwelRaus');
   if (jr) jr.onclick = () => { delete P.juwelIn[t.id]; speichern(); talentRender(); };
   const b = $('#lernBtn');
-  if (b) b.onclick = () => {
-    P.talente.push(t.id);
-    // 💎 die erste Fassung bringt gleich ein Juwel mit (und setzt es ein)
-    if (t.typ === 'juwel' && !(P.juwelen || []).length) {
-      const J = juwelGeben();
-      if (J) { (P.juwelIn ||= {})[t.id] = JUWELEN.indexOf(J); toast(`💎 Dein erstes Juwel: ${J.ico} ${J.name}!`); }
-    }
-    speichern();
-    talentRender();
-  };
+  if (b) b.onclick = () => talentLernen(t.id);
+}
+// Lernbar = nicht die Mitte, noch nicht gelernt, nichts sperrt (Punkt frei, angrenzend …)
+const talentLernbar = (id) => id !== 'mitte' && !!TALENTE[id] && !P.talente.includes(id) && !talentSperre(id);
+function talentLernen(id) {
+  const t = TALENTE[id];
+  P.talente.push(id);
+  // 💎 die erste Fassung bringt gleich ein Juwel mit (und setzt es ein)
+  let extra = '';
+  if (t.typ === 'juwel' && !(P.juwelen || []).length) {
+    const J = juwelGeben();
+    if (J) { (P.juwelIn ||= {})[id] = JUWELEN.indexOf(J); extra = ` · 💎 Dein erstes Juwel: ${J.ico} ${J.name}!`; }
+  }
+  speichern();
+  talentRender();
+  toast(`✨ ${t.ico} ${t.name} gelernt!${extra}`);   // am Handy liegt die Info oft außer Sicht – kurze Bestätigung
 }
 
 // --- ⚜️ Spezialisierung ---
