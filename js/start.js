@@ -84,12 +84,10 @@ function startStandHtml() {
   if (!startHatStand()) return `<div class="ststand leer"><b>Noch kein Spielstand auf diesem Rechner.</b><span>Starte ein neues Spiel – oder lade deine Spielstand-Datei.</span></div>`;
   const b = BURGEN[BURGNR] || {};
   const geloest = Object.values(P.hoefe || {}).filter((s) => s?.fertig).length;
-  const name = (PROFIL.name || '').trim();
   const zuletzt = startZuletzt();
   const neu = P.tag === 1 && P.phase === 'morgen' && !geloest;
   return `<div class="ststand">
     <div class="stkopf">💾 Spielstand auf diesem Rechner</div>
-    ${name ? `<div class="stname">${PROFIL.figur === 'w' ? '👩‍🌾' : '🧑‍🌾'} ${esc(name)}</div>` : ''}
     <div class="stzeile"><span>${b.ico || '🏰'} ${esc(b.name || 'Burg')}</span>${neu ? '<span>noch nicht begonnen</span>' : `<span>☀️ Tag ${P.tag}</span><span>🌙 Nacht ${P.nacht}</span>`}</div>
     ${neu ? '' : `<div class="stzeile"><span>🧙 Level ${heldLevel().level}</span><span>🪙 ${P.gold}</span><span>✅ ${geloest} gelöst</span></div>`}
     ${zuletzt ? `<div class="stzeit">zuletzt gespielt: ${zuletzt}</div>` : ''}
@@ -100,6 +98,7 @@ function startAufbauen() {
   const el = document.getElementById('startScreen');
   if (!el || !START.offen) return;
   const hat = startHatStand();
+  startWerAufbauen(el);
   el.querySelector('#stStand').innerHTML = startStandHtml();
   const weiter = el.querySelector('#stWeiter');
   weiter.innerHTML = hat ? '▶ Weiterspielen' : '▶ Spiel starten';
@@ -142,6 +141,31 @@ function startAufbauen() {
   el.classList.add('bereit');
   START.neuMalen?.();   // Menü hat jetzt seine echte Größe
   if (!karteOffen()) weiter.focus({ preventScroll: true });
+}
+
+// 🎓 Name und Klassenstufe (Nutzerwunsch 2026-11-16): immer sichtbar. Die Klasse wählt die Burg dieser Stufe –
+// ohne Code (burgFrei). Andere Klasse antippen = Spielstand sichern und in deren Burg wechseln (jede Burg hat ihren eigenen Stand).
+// Im Leistungskurs nur der Name: dort wählt man das Thema über die Burgwahl im Spiel.
+function startWerAufbauen(el) {
+  const feld = el.querySelector('#stName');
+  feld.value = PROFIL.name || '';
+  feld.oninput = () => { PROFIL.name = feld.value.trim(); profilSpeichern(); };
+  feld.onkeydown = (e) => { if (e.key === 'Enter') el.querySelector('#stWeiter').focus(); };
+  const box = el.querySelector('#stKlasseBox');
+  if (LK) { box.classList.add('hidden'); return; }
+  const stufen = Object.entries(BURGEN).filter(([b, B]) => burgSichtbar(+b) && typeof B.klasse === 'number')
+    .sort((a, b) => a[1].klasse - b[1].klasse);
+  const jetzt = BURGEN[BURGNR]?.klasse;
+  const liste = el.querySelector('#stKlasse');
+  liste.innerHTML = stufen.map(([b, B]) => `<button type="button" data-stufe="${b}" class="${B.klasse === jetzt ? 'sel' : ''}"
+    title="${esc(B.name)}: ${esc(B.text)}"><span class="ico">${B.ico}</span>Kl. ${B.klasse}</button>`).join('');
+  for (const k of liste.querySelectorAll('[data-stufe]')) k.onclick = () => {
+    const b = +k.dataset.stufe;
+    PROFIL.klasse = BURGEN[b].klasse;
+    if (b === BURGNR) { profilSpeichern(); return; }
+    for (const x of liste.querySelectorAll('button')) { x.disabled = true; x.classList.toggle('sel', x === k); }
+    burgWechseln(b);   // speichert, merkt die Burg im Profil und lädt neu – der Startbildschirm zeigt dann deren Stand
+  };
 }
 
 function startSchliessen() {

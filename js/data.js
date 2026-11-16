@@ -517,17 +517,21 @@ function profilLaden() {
   // Erster Start: im LK die erste LK-Burg; sonst schlägt ?klasse=8 die Burg vor; wer schon einen alten Stand hat, ist in Burg 7
   if (!PROFIL.burg) {
     const k = +new URLSearchParams(location.search).get('klasse');
-    PROFIL.burg = LK ? ersteLkBurg() : BURGEN[k] && !localStorage.getItem(SAVE_KEY) ? k : 7;
+    const neu = !LK && BURGEN[k] && !lkBurg(k) && !localStorage.getItem(SAVE_KEY);
+    PROFIL.burg = LK ? ersteLkBurg() : neu ? k : 7;
+    if (neu && !PROFIL.klasse) PROFIL.klasse = k;   // ?klasse=8 wählt gleich die Klassenstufe
   }
   // 🔒 Burgen außer 7 brauchen einen Code der Lehrkraft (Nutzerwunsch: alle bleiben grob im Rahmen der Klasse).
   // Gewünscht, aber gesperrt (z. B. ?klasse=8): erst Burg 7, main.js zeigt gleich die Burgwahl mit Code-Feld
   BURGNR = burgSichtbar(PROFIL.burg) && burgFrei(PROFIL.burg) ? PROFIL.burg : 7;
 }
-// Frei: Burg 7, mit Code freigeschaltet oder schon gespielt (alte Stände behalten ihre Burgen).
+// Frei: Burg 7, die eigene Klassenstufe, mit Code freigeschaltet oder schon gespielt (alte Stände behalten ihre Burgen).
 // Im LK zusätzlich die erste LK-Burg und alle Burgen der Sek I (freiwillige Auffrischung, ohne Code).
 function burgFrei(b) {
   if (!burgSichtbar(b)) return false;
   if (+b === 7 || (PROFIL.burgFrei || []).includes(+b)) return true;
+  // 🎓 Die Klassenstufe vom Startbildschirm (PROFIL.klasse) öffnet ihre Burg ohne Code (Nutzerwunsch 2026-11-16)
+  if (!LK && +b === +PROFIL.klasse) return true;
   // Leistungskurs: keine Trennung nach Klasse 11/12 – jede LK-Burg kann man anfangen, wann man will (Nutzer 2026-11-12);
   // B-Codes funktionieren weiter, schalten im LK aber nichts mehr extra frei
   if (LK) return true;
