@@ -95,6 +95,7 @@
       </div>
       <input type="file" id="stDatei" accept=".json,application/json" class="hidden">
       <div class="stfuss"><span id="stPython" class="stpython"></span><button id="stLehrer" class="stlink">👩‍🏫 Für Lehrkräfte</button></div>
+      <p class="stueber">Entstanden für meine Schülerinnen und Schüler am Gymnasium Dresden-Pieschen. Über Feedback und Hinweise freue ich mich sehr. – René Richter, <a href="#" data-m="richter|gdpie.lernsax.de">✉️ E-Mail</a></p>
     </div>
   </div>
 </div>
@@ -173,5 +174,6 @@
 <script src="js/main.js"></script>
 <script src="js/balance.js"></script>
 <script type="module" src="js/editor.js"></script>
+<script>/* Mail-Link erst beim Antippen zusammensetzen */ document.addEventListener('click', function (e) { var a = e.target.closest('[data-m]'); if (!a) return; e.preventDefault(); var m = a.dataset.m.split('|'); location.href = 'mailto:' + m[0] + '@' + m[1] + '?subject=' + encodeURIComponent('Automate the Castle'); });</script>
 </body>
 </html>

@@ -1097,3 +1097,5 @@ details.mehr h4 { margin: 10px 0 4px; font: 15px 'Lilita One', sans-serif; font-
 /* ✏️ Lückencode: Einfügestelle mitten im Programm, Blöcke antippbar */
 #blockbox .bnaechst.hier { border: 2px dashed var(--gold); color: var(--gold); }
 #blockbox .block[data-i] { cursor: pointer; }
+.stueber { margin: 2px 0 0; font-size: 12px; line-height: 1.4; color: rgba(255, 255, 255, .6); text-align: center; }
+.stueber a { color: var(--blau); }
